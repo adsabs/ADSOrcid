@@ -9,9 +9,9 @@ from ADSOrcid.models import KeyValue
 from kombu import Queue
 import datetime
 import requests
+import os
 
-
-app = app_module.ADSOrcidCelery('orcid-pipeline')
+app = app_module.ADSOrcidCelery('orcid-pipeline', proj_home=os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
 app.conf.CELERY_QUEUES = (
     Queue('check-orcidid', app.exchange, routing_key='check-orcidid'),
     Queue('record-claim', app.exchange, routing_key='record-claim'),
