@@ -44,7 +44,8 @@ class Test(unittest.TestCase):
            'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],
            'author_norm': [u'Stern, D'],
            'name': u'Stern, D K' 
-          }                          
+          },
+          0.9                     
         )
         self.assertEqual(r, ('verified', 12))
         self.assertEqual(doc['claims']['verified'], 
@@ -61,7 +62,8 @@ class Test(unittest.TestCase):
            'author_norm': [u'Stern, D'],
            'name': u'Stern, D K',
            'status': 'removed'
-          }                          
+          },
+          0.9                        
         )
         self.assertEqual(doc['claims']['verified'], 
             ['-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-'])
@@ -78,7 +80,8 @@ class Test(unittest.TestCase):
            'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],
            'author_norm': [u'Stern, D'],
            'name': u'Stern, D K' 
-          }                          
+          },
+          0.9                       
         )
         self.assertEqual(r, ('verified', 12))
         self.assertEqual(doc['claims']['verified'], 
