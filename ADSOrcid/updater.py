@@ -67,22 +67,22 @@ def update_record(rec, claim, min_levenshtein):
             v[v.index(orcidid)] = '-'
             modified = True
             
-    # search using descending priority
+    # use all name variations to match name in bib record
+    claim_names = []
     for fx in ('author', 'orcid_name', 'author_norm', 'short_name'):
-        if fx in claim and claim[fx]:
-            
+        if fx in claim and claim[fx]:            
             assert(isinstance(claim[fx], list))
-            idx = find_orcid_position(rec['authors'], claim[fx], min_levenshtein=min_levenshtein)
-            if idx > -1:              
-                if idx >= num_authors:
-                    logger.error(u'Index is beyond list boundary: \n' + 
-                                     u'Field {fx}, author {author}, len(authors)={la}, len({fx})=lfx'
-                                     .format(
-                                       fx=fx, author=claim[fx], la=num_authors, lfx=len(claim[fx])
-                                       )
-                                     )
-                    continue
-                
+            claim_names += claim[fx]
+
+    if claim_names:
+        idx = find_orcid_position(rec['authors'], claim_names, min_levenshtein=min_levenshtein)
+        if idx > -1:              
+            if idx >= num_authors:
+                logger.error(u'Index is beyond list boundary: \n' + 
+                             u'Field {fx}, author {author}, len(authors)={la}, len({fx})=lfx'
+                             .format(fx=fx, author=claim[fx], la=num_authors, lfx=len(claim[fx]))
+                             )
+            else:
                 claims[fld_name][idx] = claim.get('status', 'created') == 'removed' and '-' or orcidid
                 return (fld_name, idx)
     
@@ -110,12 +110,15 @@ def find_orcid_position(authors_list, name_variants,
     for variant in nv:
         aidx = 0
         for author in al:
-            res.append((Levenshtein.ratio(author, variant), aidx, vidx))
+            # to allow for matching of names with just initials, compare only N characters,
+            # where N is the min of the two name lengths
+            l = min(len(author), len(variant))
+            res.append((Levenshtein.ratio(author[0:l], variant[0:l]), aidx, vidx))
             aidx += 1
         vidx += 1
         
-    # sort results from the highest match
-    res = sorted(res, key=lambda x: x[0], reverse=True)
+    # sort results from the highest match but return longest names first
+    res = sorted(res, key=lambda x: (x[0], len(al[x[1]] + nv[x[2]])), reverse=True)
     
     if len(res) == 0:
         return -1

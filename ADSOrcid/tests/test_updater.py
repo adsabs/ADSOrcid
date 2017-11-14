@@ -90,6 +90,36 @@ class Test(unittest.TestCase):
         self.assertEqual(14, len(doc['claims']['verified']))
         
 
+        doc1 = { 
+            'bibcode': "2001RadR..155..543L",
+            "authors": [
+                "Li, Zhongkui",
+                "Xia, Liqun",
+                "Lee, Leo M.",
+                "Khaletskiy, Alexander",
+                "Wang, J",
+                "Wong, Jeffrey Y. C.",
+                "Li, Jian-Jian"
+                ],
+            'claims': {}
+            }
+        r = updater.update_record(
+          doc1,
+          {
+           'bibcode': '2001RadR..155..543L', 
+           'orcidid': '0000-0003-2686-9241',
+           'account_id': '1',
+           'orcid_name': [u'Wong, J Y'],
+           'author': [u'Wong, J Y'],
+           'author_norm': [u'Wong, J'],
+           'name': u'Wong, J Y' 
+          },
+          0.63      
+        )
+        self.assertEqual(r, ('verified', 5))
+        self.assertEqual(doc1['claims']['verified'], 
+            ['-', '-', '-', '-', '-', '0000-0003-2686-9241', '-'])
+                 
     def test_find_author_position(self):
         """
         Given the ORCID ID, and information about author name, 
@@ -142,6 +172,13 @@ class Test(unittest.TestCase):
                ], 
               ["Frey, Katie"]);
         self.assertEqual(res, 2)
+        res = updater.find_orcid_position([
+                "Wang, J",
+                "Wong, Jeffrey Y. C."
+                ],
+               ["Wong, J K", "Wong, J"],
+               min_levenshtein=0.63)
+        self.assertEqual(res, 1)
 
             
 if __name__ == '__main__':
