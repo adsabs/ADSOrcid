@@ -137,6 +137,7 @@ def find_orcid_position(authors_list, name_variants,
                            unicode(variant_name, 'utf-8')))
         return -1
     
+    logger.debug('Found match: %s (min_levenstein=%s), authors=%s', authors_list[res[0][1]], min_levenshtein, authors_list)
     return res[0][1]
 
 
