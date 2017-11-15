@@ -287,7 +287,7 @@ class ADSOrcidCelery(ADSCelery):
                     seek_ids = sorted(seek_ids, key=lambda x: x[0], reverse=True)
                     for _priority, fvalue in seek_ids:
                         try:
-                            time.sleep(1.0/random.randint(1, 10)) # be nice to the api
+                            time.sleep(1.0/random.randint(5, 10)) # be nice to the api
                             metadata = self.retrieve_metadata(fvalue, search_identifiers=True)
                             if metadata and metadata.get('bibcode', None):
                                 bibc = metadata.get('bibcode')
