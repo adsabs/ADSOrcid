@@ -4,6 +4,7 @@
 
 import unittest
 from ADSOrcid import updater
+from ADSOrcid import names
 
 class Test(unittest.TestCase):
     
@@ -97,24 +98,26 @@ class Test(unittest.TestCase):
                 "Xia, Liqun",
                 "Lee, Leo M.",
                 "Khaletskiy, Alexander",
-                "Wang, J",
-                "Wong, Jeffrey Y. C.",
+                "Wang, J.",
+                "Wong, J. Y.",
                 "Li, Jian-Jian"
                 ],
             'claims': {}
             }
+        orcid_name = u'Wong, Jeffrey Yang'
         r = updater.update_record(
           doc1,
           {
            'bibcode': '2001RadR..155..543L', 
            'orcidid': '0000-0003-2686-9241',
            'account_id': '1',
-           'orcid_name': [u'Wong, J Y'],
+           'orcid_name': [orcid_name],
            'author': [u'Wong, J Y'],
            'author_norm': [u'Wong, J'],
-           'name': u'Wong, J Y' 
+           'name': u'Wong, J Y',
+           'short_name': names.build_short_forms(orcid_name)
           },
-          0.63      
+          0.8
         )
         self.assertEqual(r, ('verified', 5))
         self.assertEqual(doc1['claims']['verified'], 
@@ -163,7 +166,7 @@ class Test(unittest.TestCase):
                "Erdmann, Christopher",
                "Frey, Katie"
                ], 
-              ["Erdmann, C"]);
+              ["Erdmann, Christopher E.", "Erdmann, C. E.", "Erdmann, C."]);
         self.assertEqual(res, 0)
         res = updater.find_orcid_position([
                "Erdmann, Christopher",
@@ -172,13 +175,24 @@ class Test(unittest.TestCase):
                ], 
               ["Frey, Katie"]);
         self.assertEqual(res, 2)
+        # this is the risk in the current implementation: 
+        # we start off with a weak full author name (short)
+        # and end up matching a different (but similar) name
+        # if we keep the levenshtein threshold low
         res = updater.find_orcid_position([
                 "Wang, J",
-                "Wong, Jeffrey Y. C."
+                "Wong, Jeffrey Y."
                 ],
                ["Wong, J K", "Wong, J"],
-               min_levenshtein=0.63)
-        self.assertEqual(res, 1)
+               min_levenshtein=0.8)
+        self.assertEqual(res, 0)
+        res = updater.find_orcid_position([
+                "Wang, J",
+                "Wong, Jeffrey Y."
+                ],
+               ["Wong, J K", "Wong, J"],
+               min_levenshtein=0.9)
+        self.assertEqual(res, -1)
 
             
 if __name__ == '__main__':
