@@ -6,6 +6,7 @@ from sqlalchemy import func, and_, distinct
 from dateutil.tz import tzutc
 import fnmatch
 import datetime
+import pdb
 
 app = tasks.app
 logger = setup_logging('reporting')
@@ -89,11 +90,21 @@ def num_claims(n_days=7):
         statuses = ['claimed','removed','updated']
 
         for s in statuses:
-            claims = session.query(func.count(distinct(ClaimsLog.bibcode)).
-                                   filter(and_(ClaimsLog.created >= beginning, ClaimsLog.created <= now,
-                                               ClaimsLog.status == s))).all()
-            logger.info('Number of unique bibcodes that have been {} in the last {} days: {}'.
-                        format(s,n_days,claims[0][0]))
+            #claims = session.query(func.count(distinct(ClaimsLog.bibcode)).
+            #                       filter(and_(ClaimsLog.created >= beginning, ClaimsLog.created <= now,
+            #                                   ClaimsLog.status == s))).all()
+            claims = session.query(ClaimsLog).distinct(ClaimsLog.bibcode, ClaimsLog.orcidid).filter(and_(
+                ClaimsLog.created >= beginning, ClaimsLog.created <= now,ClaimsLog.status == s)).all()
+
+            logger.info('Number of unique claims by a unique bibcode+ORCID ID pair that have been {} in the last {} days: {}'.
+                        format(s,n_days,len(claims)))
+
+        total_claims = session.query(ClaimsLog).filter(and_(ClaimsLog.created >= beginning,
+                                                            ClaimsLog.created <= now,
+                                                            ClaimsLog.status.in_(statuses))).all()
+
+        logger.info('Total number of non-unique claims with status {} in the last {} days, to compare with logging on rejected claims: {}'.
+                    format(statuses,n_days,len(total_claims)))
 
 if __name__ == '__main__':
     # Before running, tunnel into SOLR and postgres and specify localhost URLs for
@@ -101,5 +112,5 @@ if __name__ == '__main__':
 
     config = {}
     config.update(load_config())
-    claimed_records()
+    #claimed_records()
     num_claims(7)
