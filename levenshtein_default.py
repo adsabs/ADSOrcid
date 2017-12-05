@@ -43,19 +43,27 @@ def query_solr(endpoint, query, start=0, rows=200, sort="date desc", fl='bibcode
     return None
 
 def get_max_lev(orcid_field='orcid_user'):
+    """
+    For every author with an ORCID ID in the authors table in postgres, checks SOLR for any accepted claims (in
+    orcid_pub, orcid_other, or orcid_user) that they have. Calculates the maximum Levenshtein distance ratio
+    possible for any of the author's name variants (from postgres) against the name on the record with the claim.
+
+    :param orcid_field: Field to query in SOLR; orcid_pub, orcid_user, or orcid_other
+    :return max_lev: list of maximum Levenshtein ratios possible for accepted claims, one per ORCID ID/record pair
+    """
 
     max_lev_dict = {}
     logger.info('Starting max lev function for {}'.format(orcid_field))
     num_rec = 0
     with app.session_scope() as session:
+        # get list of ORCID IDs to check from the authors table in postgres. This will get all ORCID IDs for
+        # orcid_user and orcid_other, but will miss some for orcid_pub
         for r in session.query(AuthorInfo).order_by(AuthorInfo.id.asc()).all():
             if num_rec % 100 == 0:
                 logger.info('Querying record {} for {}'.format(num_rec,orcid_field))
             rec = r.toJSON()
             orcidid = rec['orcidid']
-            #if orcidid == '0000-0002-4391-6137':
-            #    print type(r.facts)
-            #tmp_facts = ast.literal_eval(r.facts)
+            # use all name variants listed in postgres for a given author
             authors = extract_names(rec['facts'])
             if orcid_field == 'orcid_pub':
                 response = query_solr(config['SOLR_URL_OLD'], 'orcid_pub:"' + orcidid + '"', sort="bibcode desc", fl='*')
@@ -66,6 +74,7 @@ def get_max_lev(orcid_field='orcid_user'):
                 response = query_solr(config['SOLR_URL_OLD'], 'orcid_user:"' + orcidid + '"', sort="bibcode desc",
                                       fl='*')
             if response['response']['docs'] == []:
+                num_rec += 1
                 continue
             else:
                 data = response['response']['docs']
@@ -75,6 +84,7 @@ def get_max_lev(orcid_field='orcid_user'):
                     rec_author = record['author'][idx[0][0]]
                     tmplev = []
                     for var in authors:
+                        # make sure the two comparison strings are the same type
                         try:
                             rec_author = unicode(rec_author,'utf-8')
                         except TypeError:
@@ -83,12 +93,15 @@ def get_max_lev(orcid_field='orcid_user'):
                             var = unicode(var,'utf-8')
                         except TypeError:
                             var = var
+                        # check the Levenshtein ratio for all variant names
                         tmplev.append(Levenshtein.ratio(rec_author,var))
+                    # keep only the best one for each record
                     lev_all.append(max(tmplev))
             max_lev_dict[orcidid] = lev_all
 
             num_rec += 1
 
+    # unroll the dictionary into a giant list
     max_lev = [item for sublist in max_lev_dict.values() for item in sublist]
 
     return max_lev
@@ -116,6 +129,16 @@ def get_mismatch_lev(save_path=os.getcwd()):
     return bad_lev
 
 def plot_hist(orcid_field='orcid_user',save_path=os.getcwd()):
+    """
+    Plots histograms of the Levenshtein ratio for every claim, accepted (into orcid_pub, orcid_user,
+    orcid_other) or rejected
+
+    :param orcid_field: claims being plotted
+        accepted claims: orcid_pub, orcid_user, orcid_other
+        rejected claims: mismatch
+    :param save_path: path to save figure image files
+    :return: None
+    """
     if orcid_field == 'mismatch':
         lev = get_mismatch_lev(save_path=save_path)
         plcol = 'red'
