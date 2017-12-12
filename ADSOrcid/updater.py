@@ -67,22 +67,25 @@ def update_record(rec, claim, min_levenshtein):
             v[v.index(orcidid)] = '-'
             modified = True
             
-    # search using descending priority
+    # create unique list of all name variations to match name in bib record,
+    # keep original order of names
+    claim_names = []
     for fx in ('author', 'orcid_name', 'author_norm', 'short_name'):
-        if fx in claim and claim[fx]:
-            
+        if fx in claim and claim[fx]:            
             assert(isinstance(claim[fx], list))
-            idx = find_orcid_position(rec['authors'], claim[fx], min_levenshtein=min_levenshtein)
-            if idx > -1:              
-                if idx >= num_authors:
-                    logger.error(u'Index is beyond list boundary: \n' + 
-                                     u'Field {fx}, author {author}, len(authors)={la}, len({fx})=lfx'
-                                     .format(
-                                       fx=fx, author=claim[fx], la=num_authors, lfx=len(claim[fx])
-                                       )
-                                     )
-                    continue
-                
+            for name in claim[fx]:
+                if name not in claim_names:
+                    claim_names.append(name)
+
+    if claim_names:
+        idx = find_orcid_position(rec['authors'], claim_names, min_levenshtein=min_levenshtein)
+        if idx > -1:              
+            if idx >= num_authors:
+                logger.error(u'Index is beyond list boundary: \n' + 
+                             u'Field {fx}, author {author}, len(authors)={la}, len({fx})=lfx'
+                             .format(fx=fx, author=claim[fx], la=num_authors, lfx=len(claim[fx]))
+                             )
+            else:
                 claims[fld_name][idx] = claim.get('status', 'created') == 'removed' and '-' or orcidid
                 return (fld_name, idx)
     
@@ -95,9 +98,19 @@ def find_orcid_position(authors_list, name_variants,
     Find the position of ORCID in the list of other strings
     
     :param authors_list - array of names that will be searched
-    :param name_variants - array of names of a single author
+    :param name_variants - array of names to be matched
     
     :return list of positions that match
+    
+    Attempts to match any of the names given in name_variants against
+    the list of names in authors_list by normalizing both lists.
+    If exact matches fail, attempt an approximate match so long as
+    the Levenshtein ratio is above min_levenshtein.
+
+    Note: the array of name_variants should be given in order of 
+    decreasing authority and "quality" (typically full author names 
+    first, abbreviations later) since matching is attempted in sequence
+
     """
     al = [names.cleanup_name(x).lower().encode('utf8') for x in authors_list]
     nv = [names.cleanup_name(x).lower().encode('utf8') for x in name_variants]
@@ -110,34 +123,30 @@ def find_orcid_position(authors_list, name_variants,
     for variant in nv:
         aidx = 0
         for author in al:
-            res.append((Levenshtein.ratio(author, variant), aidx, vidx))
+            ldist = Levenshtein.ratio(author, variant)
+            if ldist == 1:
+                logger.debug('Found exact match for author="%s", variant="%s", authors=%s', 
+                             author, variant, authors_list)
+                return aidx
+            res.append((ldist, aidx, vidx))
             aidx += 1
         vidx += 1
         
-    # sort results from the highest match
-    res = sorted(res, key=lambda x: x[0], reverse=True)
+    # sort results from the highest match but return longest names first
+    # XXX: maybe we should have a weighted score so that the score for
+    # longer names is boosted, but the ratio already does that to some extent
+    res = sorted(res, key=lambda x: (x[0], len(al[x[1]] + nv[x[2]])), reverse=True)
     
     if len(res) == 0:
         return -1
     
     if res[0][0] < min_levenshtein:
-        # test submatch (0.6470588235294118, 19, 0) (required:0.69) closest: vernetto, s, variant: vernetto, silvia teresa
-        author_name = al[res[0][1]]
-        variant_name = nv[res[0][2]]
-        if author_name in variant_name or variant_name in author_name:
-            logger.debug(u'Using submatch for: %s (required:%s) closest: %s, variant: %s' \
-                        % (res[0], min_levenshtein, 
-                           unicode(author_name, 'utf-8'), 
-                           unicode(variant_name, 'utf-8')))
-            return res[0][1]
-            
-        logger.debug(u'No match found: the closest is: %s (required:%s) closest: %s, variant: %s' \
-                        % (res[0], min_levenshtein, 
-                           unicode(author_name, 'utf-8'), 
-                           unicode(variant_name, 'utf-8')))
+        logger.debug('No match found, closest is: %s (required:%s) author="%s", variant="%s"', 
+                     res[0], min_levenshtein, al[res[0][1]], nv[res[0][2]])
         return -1
     
-    logger.debug('Found match: %s (min_levenstein=%s), authors=%s', authors_list[res[0][1]], min_levenshtein, authors_list)
+    logger.debug('Found match: %s (required:%s), author="%s", varian="%s", authors=%s', 
+                 res[0], min_levenshtein, al[res[0][1]], nv[res[0][2]], authors_list)
     return res[0][1]
 
 
