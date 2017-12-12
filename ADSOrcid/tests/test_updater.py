@@ -3,7 +3,8 @@
 
 
 import unittest
-from ADSOrcid import updater
+from mock import patch
+from ADSOrcid import updater, names
 
 class Test(unittest.TestCase):
     
@@ -88,7 +89,50 @@ class Test(unittest.TestCase):
             ['-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '0000-0003-2686-9241', '-'])
         
         self.assertEqual(14, len(doc['claims']['verified']))
-        
+
+    def test_exact_match(self):
+        """
+        Given an author with an exact name match, the Levenshtein matching function should not be called.
+
+        :return: None
+        """
+
+        with patch.object(updater,'find_orcid_position') as next_task:
+
+            self.assertFalse(next_task.called)
+            doc1 = {
+                'bibcode': "2001RadR..155..543L",
+                "authors": [
+                    "Li, Zhongkui",
+                    "Xia, Liqun",
+                    "Lee, Leo M.",
+                    "Khaletskiy, Alexander",
+                    "Wang, J.",
+                    "Wong, J. Y.",
+                    "Li, Jian-Jian"
+                ],
+                'claims': {}
+            }
+            orcid_name = u'Wong, Jeffrey Yang'
+            r = updater.update_record(
+                doc1,
+                {
+                    'bibcode': '2001RadR..155..543L',
+                    'orcidid': '0000-0003-2686-9241',
+                    'account_id': '1',
+                    'orcid_name': [orcid_name],
+                    'author': [u'Wong, J Y'],
+                    'author_norm': [u'Wong, J'],
+                    'name': u'Wong, J Y',
+                    'short_name': names.build_short_forms(orcid_name)
+                },
+                0.8
+            )
+            self.assertEqual(r, ('verified', 5))
+            self.assertEqual(doc1['claims']['verified'],
+                             ['-', '-', '-', '-', '-', '0000-0003-2686-9241', '-'])
+            # find_orcid_position should be bypassed by the exact string match
+            self.assertFalse(next_task.called)
 
     def test_find_author_position(self):
         """

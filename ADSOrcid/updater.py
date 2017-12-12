@@ -54,7 +54,7 @@ def update_record(rec, claim, min_levenshtein):
     
     if fld_name not in claims or claims[fld_name] is None:
         claims[fld_name] = ['-'] * num_authors
-    elif len(claims[fld_name]) < num_authors: # check the lenght is correct
+    elif len(claims[fld_name]) < num_authors: # check the length is correct
         claims[fld_name] += ['-'] * (num_authors - len(claims[fld_name]))
     elif len(claims[fld_name]) > num_authors:
         claims[fld_name] = claims[fld_name][0:num_authors]
@@ -66,9 +66,23 @@ def update_record(rec, claim, min_levenshtein):
         while orcidid in v:
             v[v.index(orcidid)] = '-'
             modified = True
-            
-    # search using descending priority
-    for fx in ('author', 'orcid_name', 'author_norm', 'short_name'):
+
+    variant_keys = ('author', 'orcid_name', 'author_norm', 'short_name')
+
+    # first check to see if there's an exact name match on the appropriate keys
+    claim_trim = {trim_key: claim[trim_key] for trim_key in variant_keys if trim_key in claim}
+    claim_list = [item for sublist in claim_trim.values() for item in sublist]
+    claims_clean = [names.cleanup_name(x).lower().encode('utf8') for x in claim_list]
+    aidx = 0
+    for author in rec['authors']:
+        author_clean = names.cleanup_name(author).lower().encode('utf8')
+        if author_clean in claims_clean:
+            claims[fld_name][aidx] = claim.get('status', 'created') == 'removed' and '-' or orcidid
+            return (fld_name, aidx)
+        aidx += 1
+
+    # if there is no exact match, try on Levenshtein distance, searching using descending priority
+    for fx in variant_keys:
         if fx in claim and claim[fx]:
             
             assert(isinstance(claim[fx], list))
