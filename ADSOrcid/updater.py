@@ -70,9 +70,11 @@ def update_record(rec, claim, min_levenshtein):
     variant_keys = ('author', 'orcid_name', 'author_norm', 'short_name')
 
     # first check to see if there's an exact name match on the appropriate keys
-    claim_trim = {trim_key: claim[trim_key] for trim_key in variant_keys if trim_key in claim}
-    claim_list = [item for sublist in claim_trim.values() for item in sublist]
-    claims_clean = [names.cleanup_name(x).lower().encode('utf8') for x in claim_list]
+    claims_clean = set()
+    for key in variant_keys:
+        for variant in claim.get(key, []):
+            claims_clean.add(names.cleanup_name(variant).lower().encode('utf-8'))
+
     aidx = 0
     for author in rec['authors']:
         author_clean = names.cleanup_name(author).lower().encode('utf8')
