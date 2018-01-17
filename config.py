@@ -59,8 +59,8 @@ API_ORCID_PROFILE_ENDPOINT = 'http://pub.orcid.org/v1.2/%s/orcid-bio'
 # lower than this, we refuse to match names, eg.
 # Levenshtein.ratio('Neumann, John', 'Neuman, J')
 # > Out[2]: 0.8181818181818182
-# Experimental results show 0.69 to be the best value.
-MIN_LEVENSHTEIN_RATIO = 0.69
+# Based on testing, minimum Levenshtein ratio has been increased to 0.75
+MIN_LEVENSHTEIN_RATIO = 0.75
 
 
 
