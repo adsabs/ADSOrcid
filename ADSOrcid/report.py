@@ -8,6 +8,9 @@ import fnmatch
 import datetime
 import cachetools
 import time
+import pytz
+import urllib3
+import requests
 
 app = tasks.app
 logger = setup_logging('reporting')
@@ -33,6 +36,52 @@ def query_records(start=0,rows=1000):
     results = resp['response']['docs']
 
     return results
+
+def query_Kibana(query='"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@message:\\"Claim refused\\""',
+                 n_days=7,rows=5):
+    """
+    Function to query Kibana for a given input query and return the response.
+
+    :param query: string query, same as would be entered in the Kibana search input (be sure to escape quotes and wrap
+        query in double quotes - see default query for formatting)
+    :param n_days: number of days backwards to query, starting now (=0 for all time)
+    :param rows: number of results to return. If you just need the total number of hits and not the results
+        themselves, can be small.
+    :return: JSON results
+    """
+
+    # get start and end timestamps (in milliseconds since 1970 epoch)
+    now = datetime.datetime.now(tzutc())
+    epoch = datetime.datetime.utcfromtimestamp(0).replace(tzinfo=pytz.UTC)
+    end_time = (now - epoch).total_seconds() * 1000.
+    if n_days != 0:
+        start_time = (now - datetime.timedelta(days=n_days) - epoch).total_seconds() * 1000.
+    else:
+        start_time = 0.
+
+    data = ('{"index":["cwl-*"]}\n{"size":%.0f,"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}],' %(rows) +
+           '"query":{"bool":{"must":[{"query_string":{"analyze_wildcard":true, "query":'+query+'}}, ' +
+           '{"range": {"@timestamp": {"gte": %.0f, "lte": %.0f,"format": "epoch_millis"}}}], "must_not":[]}}, ' % (start_time, end_time)+
+           '"docvalue_fields":["@timestamp"]}\n\n')
+
+    header = {'origin': 'https://pipeline-kibana.kube.adslabs.org',
+              'authorization': 'Basic ' + config['KIBANA_TOKEN'],
+              'content-type': 'application/x-ndjson',
+              'kbn-version': '5.5.2'}
+
+    url = 'https://pipeline-kibana.kube.adslabs.org/_plugin/kibana/elasticsearch/_msearch'
+
+    # set to bypass SSL cert problem w/ Kibana
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    resp = requests.post('https://pipeline-kibana.kube.adslabs.org/_plugin/kibana/elasticsearch/_msearch', data=data,
+                         headers=header, verify=False)
+
+    if resp.status_code == 200:
+        results = resp.json()
+        return results
+    logger.warn('For query {}, there was a network problem: {0}\n'.format(query,resp))
+    return None
 
 def claimed_records(debug=False):
     """
@@ -153,6 +202,39 @@ def num_claims(n_days=7):
         logger.info('Total number of non-unique claims with status {} in the last {} days, to compare with logging on rejected claims: {}'.
                     format(statuses,n_days,len(total_claims)))
 
+def num_refused_claims(n_days=7):
+    """
+    Queries logs via Kibana to get the number of refused claims over a given time period.
+
+    :param n_days: Number of days backwards to look, starting from now
+    :return: None (outputs to logs)
+    """
+
+    query = '"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@message:\\"Claim refused\\""'
+
+    # don't need the full set of results as the total is passed separately
+    resp = query_Kibana(query=query,n_days=n_days,rows=5)
+
+    total = resp['responses'][0]['hits']['total']
+
+    logger.info('Number of claims rejected in the last {} days: {}'.format(n_days,total))
+
+def num_missing_profile(n_days=7):
+    """
+    Queries logs via Kibana to get the number of profiles reported missing over a given time period.
+
+    :param n_days: Number of days backwards to look, starting from now
+    :return: None (outputs to logs)
+    """
+
+    query = '"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@message:\\"Missing profile for\\""'
+
+    resp = query_Kibana(query=query, n_days=n_days, rows=5)
+
+    total = resp['responses'][0]['hits']['total']
+
+    logger.info('Number of missing profile errors in the last {} days: {}'.format(n_days, total))
+
 if __name__ == '__main__':
     # Runs all reporting scripts, outputs results to logs
 
@@ -163,3 +245,5 @@ if __name__ == '__main__':
     config.update(load_config())
     claimed_records()
     num_claims(7)
+    num_refused_claims(7)
+    num_missing_profile(7)
