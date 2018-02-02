@@ -3,6 +3,8 @@
 
 # ADSOrcid
 
+Short summary
+============================
 ORCID metadata enrichment pipeline - grabs claims from the API and enriches ADS storage/index.
 
 How it works:
@@ -17,7 +19,18 @@ How it works:
        (it is the responsibility of the ADS Import pipeline to pick orcid claims and send them to
        SOLR for indexing)
        
-       
+Queues
+============================
+- check-orcidid: compares our stored version of the ORCID works against that of ORCID; records claims
+with appropriate statuses; sends tasks (individual claims) to record-claim queue
+- record-claim: receives single claim; checks existence of bibcode, updates claim with more author
+information; passes claim to match-claim queue
+- match-claim: verifies (or rejects) claims from record-claim, records approved claims; passes 
+approved claims to output-results queue
+- output-results:  sends results to another pipeline to be incorporated into the record
+- check-updates: checks ORCID microservice for updated profiles; if it finds any, sends them
+to check-orcidid
+      
 
 dev setup - vagrant (docker)
 ============================
@@ -108,3 +121,7 @@ Here are some useful commands:
 - tail log from one of the workers
 
 	`docker exec ADSOrcid tail -f /app/logs/ClaimsImporter.log`
+
+Maintainers
+============================
+Kelly, Roman
