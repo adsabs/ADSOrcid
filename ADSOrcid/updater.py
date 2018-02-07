@@ -132,8 +132,11 @@ def find_orcid_position(authors_list, name_variants,
         aidx = 0
         for author in al:
             res.append((Levenshtein.ratio(author, variant), aidx, vidx))
-            # check transliterated/ascii form of names in author list as well
-            res_asc.append((Levenshtein.ratio(u2asc(author), variant), aidx, vidx))
+            # check transliterated/ascii form of names in author list if name is different from ascii version
+            if u2asc(author) != author:
+                res_asc.append((Levenshtein.ratio(u2asc(author), variant), aidx, vidx))
+            else:
+                res_asc.append(res[-1])
             aidx += 1
         vidx += 1
         
