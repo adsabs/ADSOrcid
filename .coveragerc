@@ -1,4 +1,4 @@
 
 [run]
 source = ADSOrcid
-omit = ADSOrcid/tests*
+omit = ADSOrcid/test*

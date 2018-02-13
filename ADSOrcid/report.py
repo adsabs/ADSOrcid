@@ -50,6 +50,9 @@ def query_Kibana(query='"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@me
     :return: JSON results
     """
 
+    config = {}
+    config.update(load_config())
+
     # get start and end timestamps (in milliseconds since 1970 epoch)
     now = datetime.datetime.now(tzutc())
     epoch = datetime.datetime.utcfromtimestamp(0).replace(tzinfo=pytz.UTC)
@@ -74,8 +77,7 @@ def query_Kibana(query='"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@me
     # set to bypass SSL cert problem w/ Kibana
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    resp = requests.post('https://pipeline-kibana.kube.adslabs.org/_plugin/kibana/elasticsearch/_msearch', data=data,
-                         headers=header, verify=False)
+    resp = requests.post(url, data=data, headers=header, verify=False)
 
     if resp.status_code == 200:
         results = resp.json()
@@ -83,7 +85,7 @@ def query_Kibana(query='"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@me
     logger.warn('For query {}, there was a network problem: {0}\n'.format(query,resp))
     return None
 
-def claimed_records(debug=False):
+def claimed_records(debug=False,test=False):
     """
     Reporting function; checks SOLR for the following:
         - number of records that have been claimed by at least one ORCID ID, in orcid_pub, orcid_user, orcid_other
@@ -96,6 +98,12 @@ def claimed_records(debug=False):
 
     :return: None (output to logs)
     """
+    if test:
+        logger = setup_logging('test_claimed')
+
+    config = {}
+    config.update(load_config())
+
     # the first 7 digits of ORCID IDs are zero padding
     orcid_wild = '000000*'
     resp_pub = query_solr(config['SOLR_URL_OLD'], 'orcid_pub:"' + orcid_wild + '"', rows=10, sort="bibcode desc", fl='bibcode')
@@ -147,7 +155,11 @@ def claimed_records(debug=False):
 
         if debug:
             logger.info('Number of results processed so far: {}'.format(start+rows))
-        start += rows
+
+        if test:
+            break
+        else:
+            start += rows
 
     logger.info('Total number of orcid_pub claims: {}'.format(num_orcid_pub))
     logger.info('Total number of orcid_user claims: {}'.format(num_orcid_user))
@@ -156,7 +168,7 @@ def claimed_records(debug=False):
     orcid_bibcodes = bibcode_pub.union(bibcode_user).union(bibcode_other)
     logger.info('Total number of records with any ORCID claims: {}'.format(len(orcid_bibcodes)))
 
-def num_claims(n_days=7):
+def num_claims(app,n_days=7,test=False):
     """
     Reporting function; checks the postgres database for:
         - number of unique ORCID IDs who have created claims in the given range of time
@@ -172,6 +184,10 @@ def num_claims(n_days=7):
     :param n_days: number of days backwards to look, starting from now
     :return: None (outputs to logs)
     """
+
+    if test:
+        logger = setup_logging('test_num_claimed')
+
     now = datetime.datetime.now(tzutc())
     beginning = now - datetime.timedelta(days=n_days)
 
@@ -202,13 +218,16 @@ def num_claims(n_days=7):
         logger.info('Total number of non-unique claims with status {} in the last {} days, to compare with logging on rejected claims: {}'.
                     format(statuses,n_days,len(total_claims)))
 
-def num_refused_claims(n_days=7):
+def num_refused_claims(n_days=7,test=False):
     """
     Queries logs via Kibana to get the number of refused claims over a given time period.
 
     :param n_days: Number of days backwards to look, starting from now
     :return: None (outputs to logs)
     """
+
+    if test:
+        logger = setup_logging('test_kibana')
 
     query = '"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@message:\\"Claim refused\\""'
 
@@ -219,13 +238,16 @@ def num_refused_claims(n_days=7):
 
     logger.info('Number of claims rejected in the last {} days: {}'.format(n_days,total))
 
-def num_missing_profile(n_days=7):
+def num_missing_profile(n_days=7,test=False):
     """
     Queries logs via Kibana to get the number of profiles reported missing over a given time period.
 
     :param n_days: Number of days backwards to look, starting from now
     :return: None (outputs to logs)
     """
+
+    if test:
+        logger = setup_logging('test_kibana')
 
     query = '"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@message:\\"Missing profile for\\""'
 
@@ -244,6 +266,6 @@ if __name__ == '__main__':
     config = {}
     config.update(load_config())
     claimed_records()
-    num_claims(7)
-    num_refused_claims(7)
-    num_missing_profile(7)
+    num_claims(n_days=7)
+    num_refused_claims(n_days=7)
+    num_missing_profile(n_days=7)
