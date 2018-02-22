@@ -108,7 +108,7 @@ class Test(unittest.TestCase):
             ['-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '0000-0003-2686-9241', '-'])
         
         self.assertEqual(14, len(doc['claims']['verified']))
-
+        
         # check transliterated name version
         r = updater.update_record(
             doc,
@@ -260,7 +260,7 @@ class Test(unittest.TestCase):
                ], 
               ["Frey, Katie"]);
         self.assertEqual(res, 2)
-
+                
         res = updater.find_orcid_position([
             u"Goldsmith, P. F.",
             u"Yıldız, U. A.",
@@ -310,6 +310,7 @@ class Test(unittest.TestCase):
                                    {'verified': ['0000-0001-0002-0003', '-', '-'],
                                     'unverified': ['-', '-', '-']},
                                     authors = [u'Payne, Cecilia', u'Doe, Jane', u'Doe, John'])
+
             self.app.record_claims('2018Test....123...B',
                                    {'verified': ['0000-0001-0002-0003', '-', '-'],
                                     'unverified': ['-', '-', '-']})
