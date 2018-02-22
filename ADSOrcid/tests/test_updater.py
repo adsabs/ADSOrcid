@@ -308,7 +308,8 @@ class Test(unittest.TestCase):
 
             self.app.record_claims('2018Test....123...A',
                                    {'verified': ['0000-0001-0002-0003', '-', '-'],
-                                    'unverified': ['-', '-', '-']})
+                                    'unverified': ['-', '-', '-']},
+                                    authors = [u'Payne, Cecilia', u'Doe, Jane', u'Doe, John'])
             self.app.record_claims('2018Test....123...B',
                                    {'verified': ['0000-0001-0002-0003', '-', '-'],
                                     'unverified': ['-', '-', '-']})
