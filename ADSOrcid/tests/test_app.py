@@ -159,7 +159,13 @@ class TestAdsOrcidCelery(unittest.TestCase):
                                     'author_norm': [u'Stern, D'],
                                     'current_affiliation': u'ADS',
                                     'name': u'Stern, D K',
-                                    'short_name': ['Stern, A', 'Stern, A D', 'Stern, D', 'Stern, D K']
+                                    'short_name': ['Stern, A', 'Stern, A D', 'Stern, D', 'Stern, D K'],
+                                    'ascii_name': ['Stern, A',
+                                            'Stern, A D',
+                                            'Stern, Andrew D',
+                                            'Stern, D',
+                                            'Stern, D K',
+                                            'Stern, Daniel']
                                     })
 
 

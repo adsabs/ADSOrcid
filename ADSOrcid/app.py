@@ -1,7 +1,7 @@
 
 
 from .models import ClaimsLog, Records, AuthorInfo, ChangeLog
-from adsputils import get_date, setup_logging, load_config, ADSCelery
+from adsputils import get_date, setup_logging, load_config, ADSCelery, u2asc
 from ADSOrcid import names
 from ADSOrcid.exceptions import IgnorableException
 from celery import Celery
@@ -562,7 +562,16 @@ class ADSOrcidCelery(ADSCelery):
                         short_names.add(variant)
         if len(short_names):
             author_data['short_name'] = sorted(list(short_names))
-        
+
+        # Create the transliterated/ascii form of the name, in case there are accented Unicode characters
+        asc_names = set()
+        for x in ('author', 'orcid_name', 'author_norm', 'short_name'):
+            if x in author_data and author_data[x]:
+                for name in author_data[x]:
+                    asc_names.add(u2asc(name))
+        if len(asc_names):
+            author_data['ascii_name'] = sorted(list(asc_names))
+
         return author_data
     
     

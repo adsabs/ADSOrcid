@@ -50,7 +50,7 @@ class Test(unittest.TestCase):
               "Hong, Jaesub",
               "Mori, Kaya",
               "Stern, Daniel",
-              "Zhang, William W."
+              "Yıldız, Umut"
             ],
             'claims': {}
         }
@@ -108,6 +108,24 @@ class Test(unittest.TestCase):
             ['-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '0000-0003-2686-9241', '-'])
         
         self.assertEqual(14, len(doc['claims']['verified']))
+        
+        # check transliterated name version
+        r = updater.update_record(
+            doc,
+            {
+                'bibcode': '2015ApJ...799..123B',
+                'orcidid': '0000-0001-2345-6789',
+                'account_id': '2',
+                'orcid_name': [u'Yildiz, Umut'],
+                'author': [u'Yildiz, U', u'Yildiz, Umut'],
+                'author_norm': [u'Yildiz, U'],
+                'name': u'Yildiz, Umut'
+            },
+            0.9
+        )
+        self.assertEqual(r, ('verified', 13))
+        self.assertEqual(doc['claims']['verified'],
+                         ['-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '0000-0003-2686-9241', '0000-0001-2345-6789'])
 
         doc_lev = {
             'bibcode': '2015ApJ...799..123B',
@@ -242,6 +260,16 @@ class Test(unittest.TestCase):
                ], 
               ["Frey, Katie"]);
         self.assertEqual(res, 2)
+                
+        res = updater.find_orcid_position([
+            u"Goldsmith, P. F.",
+            u"Yıldız, U. A.",
+            u"Langer, W. D.",
+            u"Pineda, J. L."
+        ],
+            ["Yildiz, U. A."]
+        )
+        self.assertEqual(res,1)
 
     def test_reindex_all_claims(self):
         """
