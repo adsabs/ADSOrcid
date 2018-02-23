@@ -7,3 +7,4 @@ requests==2.13.0
 psycopg2==2.7.1
 numpy==1.13.3
 matplotlib==2.0.2
+urllib3==1.22
