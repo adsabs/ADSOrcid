@@ -19,7 +19,7 @@ import random
 import requests
 import time
 import traceback
-
+import pdb
 
 # global objects; we could make them belong to the app object but it doesn't seem necessary
 # unless two apps with a different endpint/config live along; TODO: move if necessary
@@ -177,6 +177,21 @@ class ADSOrcidCelery(ADSCelery):
             self.logger.warning(r.text)
             return {}
 
+    def _check_profile_version(self, profile):
+        try:
+            r = profile['message-version']
+            v = 1
+            return v
+        except:
+            try:
+                r = profile['activities-summary']
+                v = 2
+                return v
+            except:
+                v = 0
+                return v
+
+
     def get_claims(self, orcidid, api_token, api_url, force=False, 
                       orcid_identifiers_order=None):
         """
@@ -225,18 +240,25 @@ class ADSOrcidCelery(ADSCelery):
     
         with self.session_scope() as session:
               
-            # orcid is THE ugliest datastructure of today!
-            try:
+            # version needs to be verified as previous ORCID API versions returned different structure; these may be
+            # caught if we force update without a user-triggered refresh
+            version = self._check_profile_version(profile)
+            if version == 2:
+                works = profile['activities-summary']['works']['group']
+            elif version == 1:
                 works = profile['orcid-profile']['orcid-activities']['orcid-works']['orcid-work']
-            except:
+            else:
                 self.logger.warning('Nothing to do for: '
                     '{0} ({1})'.format(orcidid,
                                        traceback.format_exc()))
                 return {}, {}, {}
-    
+
             # check we haven't seen this very profile already
             try:
-                updt = str(profile['orcid-profile']['orcid-history']['last-modified-date']['value'])
+                if version == 2:
+                    updt = str(profile['history']['last-modified-date']['value'])
+                else:
+                    updt = str(profile['orcid-profile']['orcid-history']['last-modified-date']['value'])
                 updt = float('%s.%s' % (updt[0:10], updt[10:]))
                 updt = datetime.datetime.fromtimestamp(updt, tzutc())
                 updt = get_date(updt.isoformat())
@@ -269,17 +291,26 @@ class ADSOrcidCelery(ADSCelery):
             for w in works:
                 bibc = None
                 try:
-                    ids =  w['work-external-identifiers']['work-external-identifier']
+                    if version == 2:
+                        ids = w['external-ids']['external-id']
+                    else:
+                        ids = w['work-external-identifiers']['work-external-identifier']
                     seek_ids = []
                     
                     # painstakingly check ids (start from a bibcode) if we can find it
                     # we'll send it through (but start from bibcodes, then dois, arxiv...)
                     fmap = orcid_identifiers_order
                     for x in ids:
-                        xtype = x.get('work-external-identifier-type', None)
-                        if xtype:
-                            seek_ids.append((fmap.get(xtype.lower().strip(), fmap.get('*', -1)), 
-                                             x['work-external-identifier-id']['value']))
+                        if version == 2:
+                            xtype = x.get('external-id-type', None)
+                            if xtype:
+                                seek_ids.append((fmap.get(xtype.lower().strip(), fmap.get('*', -1)),
+                                                 x['external-id-value']))
+                        else:
+                            xtype = x.get('work-external-identifier-type', None)
+                            if xtype:
+                                seek_ids.append((fmap.get(xtype.lower().strip(), fmap.get('*', -1)),
+                                                 x['work-external-identifier-id']['value']))
                     
                     if len(seek_ids) == 0:
                         continue
@@ -480,15 +511,14 @@ class ADSOrcidCelery(ADSCelery):
         if j is None:
             self.logger.error('We cant verify public profile of: http://orcid.org/%s' % orcidid)
         else:
-            # we don't trust (the ugly) ORCID profiles too much
-            # j['orcid-profile']['orcid-bio']['personal-details']['family-name']
-            if 'orcid-profile' in j and 'orcid-bio' in j['orcid-profile'] \
-                and 'personal-details' in j['orcid-profile']['orcid-bio'] and \
-                'family-name' in j['orcid-profile']['orcid-bio']['personal-details'] and \
-                'given-names' in j['orcid-profile']['orcid-bio']['personal-details']:
-                
-                fname = (j['orcid-profile']['orcid-bio']['personal-details'].get('family-name', {}) or {}).get('value', None)
-                gname = (j['orcid-profile']['orcid-bio']['personal-details'].get('given-names', {}) or {}).get('value', None)
+            # no need to check ORCID API version here; this is always fresh and must use current API
+            # j['person']['name']['family-name']
+            if 'person' in j and 'name' in j['person'] and \
+                'family-name' in j['person']['name'] and \
+                'given-names' in j['person']['name']:
+
+                fname = (j['person']['name'].get('family-name', {}) or {}).get('value', None)
+                gname = (j['person']['name'].get('given-names', {}) or {}).get('value', None)
                 
                 if fname and gname:
                     author_data['orcid_name'] = ['%s, %s' % (fname, gname)]
