@@ -69,3 +69,9 @@ MIN_LEVENSHTEIN_RATIO = 0.75
 # means 'higher priority'
 # the '*' will be used for no-match, if this number is <0, the identifier will be skipped
 ORCID_IDENTIFIERS_ORDER = {'bibcode': 9, 'doi': 8, 'arxiv': 7, '*': 0}
+
+# token to query Kibana - gives us access to our logs
+KIBANA_TOKEN = 'fix_me'
+
+# URL to access SOLR; can be a localhost URL after tunneling
+SOLR_URL = 'http://localhost:9984/solr/collection1/query'
