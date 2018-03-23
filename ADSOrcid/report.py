@@ -31,7 +31,7 @@ def query_records(start=0,rows=1000):
     """
     orcid_wild = '000000*'
 
-    resp = query_solr(config['SOLR_URL_OLD'], 'orcid:"' + orcid_wild + '"', start=start, rows=rows,
+    resp = query_solr(config['SOLR_URL'], 'orcid:"' + orcid_wild + '"', start=start, rows=rows,
                       sort="bibcode desc", fl='orcid_pub,orcid_user,orcid_other,bibcode')
     results = resp['response']['docs']
 
@@ -106,9 +106,9 @@ def claimed_records(debug=False,test=False):
 
     # the first 7 digits of ORCID IDs are zero padding
     orcid_wild = '000000*'
-    resp_pub = query_solr(config['SOLR_URL_OLD'], 'orcid_pub:"' + orcid_wild + '"', rows=10, sort="bibcode desc", fl='bibcode')
-    resp_user = query_solr(config['SOLR_URL_OLD'], 'orcid_user:"' + orcid_wild + '"', rows=10, sort="bibcode desc", fl='bibcode')
-    resp_other = query_solr(config['SOLR_URL_OLD'], 'orcid_other:"' + orcid_wild + '"', rows=10, sort="bibcode desc", fl='bibcode')
+    resp_pub = query_solr(config['SOLR_URL'], 'orcid_pub:"' + orcid_wild + '"', rows=10, sort="bibcode desc", fl='bibcode')
+    resp_user = query_solr(config['SOLR_URL'], 'orcid_user:"' + orcid_wild + '"', rows=10, sort="bibcode desc", fl='bibcode')
+    resp_other = query_solr(config['SOLR_URL'], 'orcid_other:"' + orcid_wild + '"', rows=10, sort="bibcode desc", fl='bibcode')
 
     logger.info('Number of records with an orcid_pub: {}'.format(resp_pub['response']['numFound']))
     logger.info('Number of records with an orcid_user: {}'.format(resp_user['response']['numFound']))
@@ -261,7 +261,7 @@ if __name__ == '__main__':
     # Runs all reporting scripts, outputs results to logs
 
     # Before running, tunnel into SOLR and postgres and specify localhost URLs for
-    # SOLR_URL_OLD and SQLALCHEMY_URL, respectively, in local_config.py
+    # SOLR_URL and SQLALCHEMY_URL, respectively, in local_config.py
 
     config = {}
     config.update(load_config())

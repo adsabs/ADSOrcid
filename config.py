@@ -53,7 +53,7 @@ API_ORCID_UPDATES_ENDPOINT = API_ENDPOINT + '/v1/orcid/export/%s'
 API_TOKEN = 'fixme'
 
 # The ORCID API public endpoint
-API_ORCID_PROFILE_ENDPOINT = 'http://pub.orcid.org/v1.2/%s/orcid-bio'
+API_ORCID_PROFILE_ENDPOINT = 'https://pub.orcid.org/v2.0/%s/record'
 
 # Levenshtein.ration() to compute similarity between two strings; if
 # lower than this, we refuse to match names, eg.
@@ -69,3 +69,9 @@ MIN_LEVENSHTEIN_RATIO = 0.75
 # means 'higher priority'
 # the '*' will be used for no-match, if this number is <0, the identifier will be skipped
 ORCID_IDENTIFIERS_ORDER = {'bibcode': 9, 'doi': 8, 'arxiv': 7, '*': 0}
+
+# token to query Kibana - gives us access to our logs
+KIBANA_TOKEN = 'fix_me'
+
+# URL to access SOLR; can be a localhost URL after tunneling
+SOLR_URL = 'http://localhost:9984/solr/collection1/query'
