@@ -164,6 +164,34 @@ class Test(unittest.TestCase):
         self.assertEqual(doc_lev['claims']['verified'],
                          ['-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '0000-0001-2345-6789'])
 
+        doc_blank = {
+            'bibcode': '2018Test.........1A',
+            'authors': [
+                "Evans, D. F.",
+                "Southworth, J.",
+                "Smalley, B.",
+                "Jorgensen, U. G.",
+                "Dominik, M.",
+                "Tronsgaard, R."
+            ],
+            'claims': {}
+        }
+        r_blank = updater.update_record(
+            doc_blank,
+            {
+                'bibcode': '2018Test.........1A',
+                'orcidid': '0000-0009-8765-4321',
+                'account_id': '2',
+                'orcid_name': [u'Tronsgaard, Rene'],
+                'author': [''],
+                'name': ''
+            },
+            0.75
+        )
+        self.assertEqual(r_blank, ('verified',5))
+        self.assertEqual(doc_blank['claims']['verified'],
+                         ['-','-','-','-','-','0000-0009-8765-4321'])
+
     def test_exact_match(self):
         """
         Given an author with an exact name match, the Levenshtein matching function should not be called.
