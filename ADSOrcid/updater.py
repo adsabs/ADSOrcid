@@ -73,7 +73,8 @@ def update_record(rec, claim, min_levenshtein):
     claims_clean = set()
     for key in variant_keys:
         for variant in claim.get(key, []):
-            claims_clean.add(names.cleanup_name(variant).lower().encode('utf-8'))
+            if bool(variant.strip()):
+                claims_clean.add(names.cleanup_name(variant).lower().encode('utf-8'))
 
     aidx = 0
     for author in rec['authors']:
@@ -90,7 +91,7 @@ def update_record(rec, claim, min_levenshtein):
     # if there is no exact match, try on Levenshtein distance, searching using descending priority
     for fx in variant_keys:
         if fx in claim and claim[fx]:
-            
+            #c = [x for x in claim[fx] if bool(x.strip())]
             assert(isinstance(claim[fx], list))
             idx = find_orcid_position(rec['authors'], claim[fx], min_levenshtein=min_levenshtein)
             if idx > -1:              
@@ -129,27 +130,28 @@ def find_orcid_position(authors_list, name_variants,
     res_asc = []
     aidx = vidx = 0
     for variant in nv:
-        aidx = 0
-        for author in al:
-            res.append((Levenshtein.ratio(author, variant), aidx, vidx))
-            # check transliterated/ascii form of names in author list if name is different from ascii version
-            if u2asc(author) != author:
-                res_asc.append((Levenshtein.ratio(u2asc(author), variant), aidx, vidx))
-            else:
-                res_asc.append(res[-1])
-            aidx += 1
+        if bool(variant.strip()):
+            aidx = 0
+            for author in al:
+                res.append((Levenshtein.ratio(author, variant), aidx, vidx))
+                # check transliterated/ascii form of names in author list if name is different from ascii version
+                if u2asc(author) != author:
+                    res_asc.append((Levenshtein.ratio(u2asc(author), variant), aidx, vidx))
+                else:
+                    res_asc.append(res[-1])
+                aidx += 1
         vidx += 1
         
     # sort results from the highest match
     res = sorted(res, key=lambda x: x[0], reverse=True)
     res_asc = sorted(res_asc, key=lambda x: x[0], reverse=True)
 
+    if len(res) == 0:
+        return -1
+
     # if transliterated forms have a higher Lev ratio, accept the transliterated form
     if res_asc[0][0] > res[0][0]:
         res = res_asc
-    
-    if len(res) == 0:
-        return -1
     
     if res[0][0] < min_levenshtein:
         # test submatch (0.6470588235294118, 19, 0) (required:0.69) closest: vernetto, s, variant: vernetto, silvia teresa
