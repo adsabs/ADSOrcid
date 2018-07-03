@@ -325,7 +325,7 @@ class ADSOrcidCelery(ADSCelery):
                                 self.logger.info('Match found {0} -> {1}'.format(fvalue, bibc))
                                 break
                         except Exception, e:
-                            self.logger.error('Exception while searching for matching bibcode for: {}'.format(fvalue))
+                            self.logger.warning('Exception while searching for matching bibcode for: {}'.format(fvalue))
                             self.logger.warning(e.message)
                             
                     
