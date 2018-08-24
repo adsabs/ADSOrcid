@@ -45,9 +45,9 @@ class TestWorkers(unittest.TestCase):
             
             get_claims.return_value = (
                 {
-                 'bibcode1': ('Bibcode1', utils.get_date('2017-01-01'), 'provenance'),
-                 'bibcode2': ('Bibcode2', utils.get_date('2017-01-01'), 'provenance'),
-                 'bibcode3': ('Bibcode3', utils.get_date('2017-01-01'), 'provenance'),
+                 'bibcode1': ('Bibcode1', utils.get_date('2017-01-01'), 'provenance', ['id1','id2']),
+                 'bibcode2': ('Bibcode2', utils.get_date('2017-01-01'), 'provenance', ['id1','id2']),
+                 'bibcode3': ('Bibcode3', utils.get_date('2017-01-01'), 'provenance', ['id1','id2']),
                 },
                 {
                  'bibcode1': ('Bibcode1', utils.get_date('2017-01-01')),
@@ -149,7 +149,8 @@ class TestWorkers(unittest.TestCase):
             self.assertFalse(next_task.called)
             tasks.task_match_claim({'status': u'claimed', 'bibcode': 'BIBCODE22', 
                               u'name': u'Stern, D K', 
-                              'provenance': u'provenance', u'orcid_name': [u'Stern, Daniel'], 
+                              'provenance': u'provenance', 'identifiers': ['id1','id2'],
+                              u'orcid_name': [u'Stern, Daniel'],
                               u'author_norm': [u'Stern, D'], u'author_status': None, 
                               'orcidid': '0000-0003-3041-2092', 
                               u'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],  

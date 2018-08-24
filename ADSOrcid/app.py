@@ -316,7 +316,9 @@ class ADSOrcidCelery(ADSCelery):
                         continue
                     
                     seek_ids = sorted(seek_ids, key=lambda x: x[0], reverse=True)
+                    fvalues = []
                     for _priority, fvalue in seek_ids:
+                        fvalues.append(fvalue)
                         try:
                             time.sleep(1.0/random.randint(5, 10)) # be nice to the api
                             metadata = self.retrieve_metadata(fvalue, search_identifiers=True)
@@ -338,8 +340,14 @@ class ADSOrcidCelery(ADSCelery):
                             provenance = w['source']['source-name']['value']
                         except KeyError:
                             provenance = 'orcid-profile'
-                        orcid_present[bibc.lower().strip()] = (bibc.strip(), get_date(ts.isoformat()), provenance)
+                        orcid_present[bibc.lower().strip()] = (bibc.strip(), get_date(ts.isoformat()), provenance, fvalues)
                     else:
+                        r = requests.post(self._config.get('API_ORCID_UPDATE_BIB_STATUS') % orcidid,
+                                          params={'bibcodes': [fvalues], 'status': ['not in ADS']},
+                                          headers={'Authorization': 'Bearer {0}'.format(self._config.get('API_TOKEN'))})
+                        if r.status_code != 200:
+                            self.logger.warning('IDs {ids} for {orcidid} not updated to: not in ADS'
+                                                .format(ids=json.dumps(fvalues), orcidid=orcidid))
                         self.logger.warning('Found no bibcode for: {orcidid}. {ids}'.format(ids=json.dumps(ids), orcidid=orcidid))
                         
                 except KeyError, e:
