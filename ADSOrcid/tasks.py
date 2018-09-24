@@ -48,6 +48,7 @@ def task_index_orcid_profile(message):
     
     message['start'] = adsputils.get_date()
     orcidid = message['orcidid']
+    author = app.retrieve_orcid(orcidid)
 
     # update profile table in microservice
     r = requests.get(app.conf.get('API_ORCID_UPDATE_PROFILE') % orcidid,
@@ -128,85 +129,27 @@ def task_index_orcid_profile(message):
     if len(to_claim):
         # create record in the database
         json_claims = app.insert_claims(to_claim)
+        if author['status'] in ('blacklisted', 'postponed'):
+            return
         # set to the queue for processing
         for claim in json_claims:
             if claim.get('bibcode'):
                 claim['bibcode_verified'] = True
+                claim['name'] = author['name']
+                if author.get('facts', None):
+                    for k, v in author['facts'].iteritems():
+                        claim[k] = v
+
+                claim['author_status'] = author['status']
+                claim['account_id'] = author['account_id']
+                claim['author_updated'] = author['updated']
+                claim['author_id'] = author['id']
+
                 if claim.get('status') != 'removed':
                     claim['identifiers'] = orcid_present[claim.get('bibcode').lower().strip()][3]
-                task_ingest_claim.delay(claim)
-            
-    # reschedule future check
-    task_index_orcid_profile.apply_async(args=(message,), countdown = app.conf.get('ORCID_PROFILE_RECHECK_WINDOW', 3600*24))
+                    claim['author_list'] = orcid_present[claim.get('bibcode').lower().strip()][4]
 
-
-
-@app.task(queue='record-claim')
-def task_ingest_claim(msg, **kwargs):
-    """
-    Processes claims in the system; it enhances the claim
-    with the information about the claimer. (and in the
-    process, updates our knowledge about the ORCIDID).
-    
-    Results are published into the queue 'verified-claim'
-    
-    :param msg: contains the message inside the packet
-        {'bibcode': '....',
-        'orcidid': '.....',
-        'provenance': 'string (optional)',
-        'status': 'claimed|updated|deleted (optional)',
-        'date': 'ISO8801 formatted date (optional)'
-        }
-    :return: no return
-    """
-    
-    if not isinstance(msg, dict):
-        raise ProcessingException('Received unknown payload {0}'.format(msg))
-    
-    if not msg.get('orcidid'):
-        raise ProcessingException('Unusable payload, missing orcidid {0}'.format(msg))
-
-    if msg.get('status', 'created') in ('unchanged', '#full-import'):
-        return
-                    
-    author = app.retrieve_orcid(msg['orcidid'])
-    
-    if not author:
-        raise ProcessingException('Unable to retrieve info for {0}'.format(msg['orcidid']))
-    
-    # clean up the bicode
-    bibcode = msg['bibcode'].strip()
-    
-    # translate the bibcode into canonical (unless we are told not to...)
-    if not msg.get('bibcode_verified', False):
-        if ' ' in bibcode:
-            parts = bibcode.split()
-            l = [len(x) for x in parts]
-            if 19 in l:
-                bibcode = parts[l.index(19)] 
-        
-        # check if we can translate the bibcode/identifier
-        rec = app.retrieve_metadata(bibcode)
-        if rec.get('bibcode') != bibcode:
-            logger.warning('Resolved {0} into {1}'.format(bibcode, rec.get('bibcode')))
-        bibcode = rec.get('bibcode') 
-    
-    msg['bibcode'] = bibcode
-    msg['name'] = author['name']
-    if author.get('facts', None):
-        for k, v in author['facts'].iteritems():
-            msg[k] = v
-            
-    msg['author_status'] = author['status']
-    msg['account_id'] = author['account_id']
-    msg['author_updated'] = author['updated']
-    msg['author_id'] = author['id']
-    
-    if msg['author_status'] in ('blacklisted', 'postponed'):
-        return
-    
-    task_match_claim.delay(msg)
-
+                task_match_claim.delay(claim)
 
 
 @app.task(queue='match-claim')
@@ -232,9 +175,10 @@ def task_match_claim(claim, **kwargs):
         raise ProcessingException('Unusable payload, missing orcidid {0}'.format(claim))
 
     bibcode = claim['bibcode']
-    rec = app.retrieve_record(bibcode)
-
     identifiers = claim.get('identifiers')
+    authors = claim['author_list']
+
+    rec = app.retrieve_record(bibcode, authors)
     
     cl = updater.update_record(rec, claim, app.conf.get('MIN_LEVENSHTEIN_RATIO', 0.9))
     if cl:

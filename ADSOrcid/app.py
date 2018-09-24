@@ -324,6 +324,7 @@ class ADSOrcidCelery(ADSCelery):
                             metadata = self.retrieve_metadata(fvalue, search_identifiers=True)
                             if metadata and metadata.get('bibcode', None):
                                 bibc = metadata.get('bibcode')
+                                author_list = metadata.get('author', [])
                                 self.logger.info('Match found {0} -> {1}'.format(fvalue, bibc))
                                 break
                         except Exception, e:
@@ -340,7 +341,7 @@ class ADSOrcidCelery(ADSCelery):
                             provenance = w['source']['source-name']['value']
                         except KeyError:
                             provenance = 'orcid-profile'
-                        orcid_present[bibc.lower().strip()] = (bibc.strip(), get_date(ts.isoformat()), provenance, fvalues)
+                        orcid_present[bibc.lower().strip()] = (bibc.strip(), get_date(ts.isoformat()), provenance, fvalues, author_list)
                     else:
                         r = requests.post(self._config.get('API_ORCID_UPDATE_BIB_STATUS') % orcidid,
                                           params={'bibcodes': [fvalues], 'status': ['not in ADS']},
@@ -653,7 +654,7 @@ class ADSOrcidCelery(ADSCelery):
         
     
     
-    def retrieve_record(self, bibcode):
+    def retrieve_record(self, bibcode, authors):
         """
         Gets a record from the database (creates one if necessary)
         """
@@ -663,9 +664,6 @@ class ADSOrcidCelery(ADSCelery):
                 r = Records(bibcode=bibcode)
                 session.add(r)
             out = r.toJSON()
-            
-            metadata = self.retrieve_metadata(bibcode)
-            authors = metadata.get('author', [])
             
             if out.get('authors') != authors:
                 r.authors = json.dumps(authors)
