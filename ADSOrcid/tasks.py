@@ -249,7 +249,7 @@ def task_match_claim(claim, **kwargs):
         if r.status_code != 200:
             logger.warning('IDs {ids} for {orcidid} not updated to: verified'
                            .format(ids=identifiers, orcidid=claim.get('orcidid')))
-        if len(r.json) != 1:
+        if len(r.json()) != 1:
             logger.warning('Number of updated bibcodes ({0}) does not match input ({1}) for {2}'.
                            format(r.text, [bibcode]+identifiers, claim.get('orcidid')))
         task_output_results.delay(msg)
