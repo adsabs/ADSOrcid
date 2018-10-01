@@ -19,7 +19,6 @@ import random
 import requests
 import time
 import traceback
-import pdb
 
 # global objects; we could make them belong to the app object but it doesn't seem necessary
 # unless two apps with a different endpint/config live along; TODO: move if necessary

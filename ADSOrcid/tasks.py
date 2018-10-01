@@ -14,7 +14,6 @@ import os
 app = app_module.ADSOrcidCelery('orcid-pipeline', proj_home=os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
 app.conf.CELERY_QUEUES = (
     Queue('check-orcidid', app.exchange, routing_key='check-orcidid'),
-    Queue('record-claim', app.exchange, routing_key='record-claim'),
     Queue('match-claim', app.exchange, routing_key='match-claim'),
     Queue('check-updates', app.exchange, routing_key='check-updates'),
     Queue('output-results', app.exchange, routing_key='output-results'),
