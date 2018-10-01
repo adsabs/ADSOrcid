@@ -348,6 +348,9 @@ class ADSOrcidCelery(ADSCelery):
                         if r.status_code != 200:
                             self.logger.warning('IDs {ids} for {orcidid} not updated to: not in ADS'
                                                 .format(ids=json.dumps(fvalues), orcidid=orcidid))
+                        if len(r.json()) != 1:
+                            self.logger.warning('Number of updated bibcodes ({0}) does not match input ({1}) for {2}'.
+                                                format(r.text, [fvalues], orcidid))
                         self.logger.warning('Found no bibcode for: {orcidid}. {ids}'.format(ids=json.dumps(ids), orcidid=orcidid))
                         
                 except KeyError, e:

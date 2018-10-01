@@ -49,6 +49,13 @@ def task_index_orcid_profile(message):
     message['start'] = adsputils.get_date()
     orcidid = message['orcidid']
 
+    # update profile table in microservice
+    r = requests.get(app.conf.get('API_ORCID_UPDATE_PROFILE') % orcidid,
+                     headers={'Accept': 'application/json',
+                              'Authorization': 'Bearer:%s' % app.conf.get('API_TOKEN')})
+    if r.status_code != 200:
+        logger.warning('Profile for {0} not updated.'.format(orcidid))
+
     orcid_present, updated, removed = app.get_claims(orcidid,
                          app.conf.get('API_TOKEN'), 
                          app.conf.get('API_ORCID_EXPORT_PROFILE') % orcidid,
@@ -242,6 +249,9 @@ def task_match_claim(claim, **kwargs):
         if r.status_code != 200:
             logger.warning('IDs {ids} for {orcidid} not updated to: verified'
                            .format(ids=identifiers, orcidid=claim.get('orcidid')))
+        if len(r.json) != 1:
+            logger.warning('Number of updated bibcodes ({0}) does not match input ({1}) for {2}'.
+                           format(r.text, [bibcode]+identifiers, claim.get('orcidid')))
         task_output_results.delay(msg)
     else:
         logger.warning('Claim refused for bibcode:{0} and orcidid:{1}'
