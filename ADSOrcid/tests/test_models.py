@@ -73,18 +73,15 @@ class Test(unittest.TestCase):
     def test_dates(self):
         '''We want to use only UTC dates'''
         app = self.app
-        with self.assertRaisesRegexp(Exception, 'ValueError'):
-            with app.session_scope() as session:
-                rec = Records(bibcode='foo', created='2009-09-03T20:56:35.450686Z')
-                session.add(rec)
-                rec.updated = datetime.now()
-                session.commit()
 
         with app.session_scope() as session:
             rec = Records(bibcode='foo', created='2009-09-03T20:56:35.450686Z')
             session.add(rec)
             rec.updated = utils.get_date()
             session.commit()
+
+            r = session.query(Records).first()
+            assert r.updated.tzname() == 'UTC'
 
             
 if __name__ == '__main__':
