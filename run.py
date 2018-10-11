@@ -223,53 +223,6 @@ def refetch_orcidids(since=None, orcid_ids=None, **kwargs):
     print 'Done'
     logger.info('Done submitting {0} orcid ids.'.format(len(orcidids)))
 
-
-def recheck_orcidids(since=None, orcid_ids=None, **kwargs):
-    """
-    Gets all orcidids regardless of last update date.
-
-    :param: since - RFC889 formatted string
-    :type: str
-
-    :return: no return
-    """
-    if orcid_ids:
-        for oid in orcid_ids:
-            tasks.task_index_orcid_profile({'orcidid': oid, 'force': False})
-            print 'Done (just the supplied orcidids)'
-            return
-
-    logging.captureWarnings(True)
-    if not since or isinstance(since, basestring) and since.strip() == "":
-        since = '1974-11-09T22:56:52.518001Z'
-
-    from_date = get_date()
-    logger.info('Re-checking orcidids at: {0}'.format(from_date.isoformat()))
-
-    # then get all new/old orcidids from orcid-service
-    orcidids = set(updater.get_all_touched_profiles(app, since.isoformat()))
-
-    for orcidid in orcidids:
-        try:
-            tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': False})
-        except:  # potential backpressure (we are too fast)
-            time.sleep(2)
-            print 'Conn problem, retrying...', orcidid
-            tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': False})
-
-    with app.session_scope() as session:
-        kv = session.query(KeyValue).filter_by(key='last.recheck').first()
-        if kv is None:
-            kv = KeyValue(key='last.recheck', value=from_date.isoformat())
-            session.add(kv)
-        else:
-            kv.value = from_date.isoformat()
-        session.commit()
-
-    print 'Done'
-    logger.info('Done submitting {0} orcid ids.'.format(len(orcidids)))
-
-
 def print_kvs():    
     """Prints the values stored in the KeyValue table."""
     print 'Key, Value from the storage:'
@@ -350,12 +303,6 @@ if __name__ == '__main__':
                         dest='refetch_orcidids',
                         action='store_true',
                         help='Gets all orcidids changed since X (as discovered from ads api) and sends them to the queue.')
-
-    parser.add_argument('-c',
-                        '--recheck_orcidids',
-                        dest='recheck_orcidids',
-                        action='store_true',
-                        help='Recheck all orcidids')
     
     parser.add_argument('-s', 
                         '--since', 
@@ -411,6 +358,3 @@ if __name__ == '__main__':
         repush_claims(args.since_date, args.orcid_ids)
     elif args.refetch_orcidids:
         refetch_orcidids(args.since_date, args.orcid_ids)
-    elif args.recheck_orcidids:
-        recheck_orcidids(args.since_date, args.orcid_ids)
-    
