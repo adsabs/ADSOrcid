@@ -174,7 +174,7 @@ class Test(unittest.TestCase):
                 "Dominik, M.",
                 "Tronsgaard, R."
             ],
-            'claims': {}
+            'claims': {'verified': ['0000-0009-8765-4321','-','-','-','-','-']}
         }
         r_blank = updater.update_record(
             doc_blank,

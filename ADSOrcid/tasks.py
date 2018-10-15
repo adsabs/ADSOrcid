@@ -49,6 +49,13 @@ def task_index_orcid_profile(message):
     message['start'] = adsputils.get_date()
     orcidid = message['orcidid']
 
+    # update profile table in microservice
+    r = requests.get(app.conf.get('API_ORCID_UPDATE_PROFILE') % orcidid,
+                     headers={'Accept': 'application/json',
+                              'Authorization': 'Bearer:%s' % app.conf.get('API_TOKEN')})
+    if r.status_code != 200:
+        logger.warning('Profile for {0} not updated.'.format(orcidid))
+
     orcid_present, updated, removed = app.get_claims(orcidid,
                          app.conf.get('API_TOKEN'), 
                          app.conf.get('API_ORCID_EXPORT_PROFILE') % orcidid,
@@ -125,6 +132,8 @@ def task_index_orcid_profile(message):
         for claim in json_claims:
             if claim.get('bibcode'):
                 claim['bibcode_verified'] = True
+                if claim.get('status') != 'removed':
+                    claim['identifiers'] = orcid_present[claim.get('bibcode').lower().strip()][3]
                 task_ingest_claim.delay(claim)
             
     # reschedule future check
@@ -224,7 +233,8 @@ def task_match_claim(claim, **kwargs):
 
     bibcode = claim['bibcode']
     rec = app.retrieve_record(bibcode)
-    
+
+    identifiers = claim.get('identifiers')
     
     cl = updater.update_record(rec, claim, app.conf.get('MIN_LEVENSHTEIN_RATIO', 0.9))
     if cl:
@@ -233,6 +243,15 @@ def task_match_claim(claim, **kwargs):
                           verified=rec.get('claims', {}).get('verified', []),
                           unverified=rec.get('claims', {}).get('unverified', [])
                           )
+        r = requests.post(app.conf.get('API_ORCID_UPDATE_BIB_STATUS') % claim.get('orcidid'),
+                        params={'bibcodes': [bibcode] + identifiers, 'status': ['verified']},
+                        headers = {'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
+        if r.status_code != 200:
+            logger.warning('IDs {ids} for {orcidid} not updated to: verified'
+                           .format(ids=identifiers, orcidid=claim.get('orcidid')))
+        if len(r.json()) != 1:
+            logger.warning('Number of updated bibcodes ({0}) does not match input ({1}) for {2}'.
+                           format(r.text, [bibcode]+identifiers, claim.get('orcidid')))
         task_output_results.delay(msg)
     else:
         logger.warning('Claim refused for bibcode:{0} and orcidid:{1}'
