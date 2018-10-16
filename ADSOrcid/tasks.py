@@ -174,8 +174,13 @@ def task_match_claim(claim, **kwargs):
         raise ProcessingException('Unusable payload, missing orcidid {0}'.format(claim))
 
     bibcode = claim['bibcode']
-    identifiers = claim.get('identifiers')
-    authors = claim['author_list']
+    if claim.get('status') != 'removed':
+        identifiers = claim['identifiers']
+        authors = claim['author_list']
+    else:
+        metadata = app.retrieve_metadata(bibcode)
+        identifiers = metadata.get('identifier', [])
+        authors = metadata.get('author', [])
 
     rec = app.retrieve_record(bibcode, authors)
     

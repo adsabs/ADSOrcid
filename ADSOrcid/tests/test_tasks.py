@@ -37,10 +37,18 @@ class TestWorkers(unittest.TestCase):
     def test_task_index_orcid_profile(self):
         
         with patch.object(self.app, 'retrieve_orcid') as retrieve_orcid, \
+            patch.object(tasks.requests, 'get') as get, \
             patch.object(self.app, 'get_claims') as get_claims, \
             patch.object(self.app, 'insert_claims') as insert_claims, \
             patch.object(tasks.task_index_orcid_profile, 'apply_async') as task_index_orcid_profile, \
             patch.object(tasks.task_match_claim, 'delay') as next_task:
+
+            r = PropertyMock()
+            data = {'bibcode': {'status': 'some status', 'title': 'some title'}}
+            r.text = str(data)
+            r.json = lambda: data
+            r.status_code = 200
+            get.return_value = r
 
             get_claims.return_value = (
                 {
@@ -108,18 +116,30 @@ class TestWorkers(unittest.TestCase):
                              ('Bibcode2', ['author one', 'Stern, D K'])
                              )
 
+            self.assertEqual((next_task.call_args_list[0][0][0]['bibcode'], next_task.call_args_list[0][0][0]['identifiers']),
+                            ('Bibcode2', ['id1', 'id2'])
+                            )
+
             
     def test_task_match_claim(self):
         
         with patch.object(self.app, 'retrieve_record') as retrieve_record, \
             patch.object(self.app, 'record_claims') as record_claims, \
+            patch.object(tasks.requests, 'post') as post, \
             patch.object(tasks.task_output_results, 'delay') as next_task:
             
             retrieve_record.return_value = {'bibcode': 'BIBCODE22',
                                             'authors': ['Einstein, A', 'Socrates', 'Stern, D K', 'Munger, C'],
                                             'claims': {'verified': ['-', '-', '-', '-'],
                                                        'unverified': ['-', '-', '-', '-']}}
-            
+
+            r = PropertyMock()
+            data = {'BIBCODE22': 'status'}
+            r.text = str(data)
+            r.json = lambda: data
+            r.status_code = 200
+            post.return_value = r
+
             self.assertFalse(next_task.called)
             tasks.task_match_claim({'status': u'claimed', 'bibcode': 'BIBCODE22', 
                               u'name': u'Stern, D K', 
@@ -139,6 +159,51 @@ class TestWorkers(unittest.TestCase):
                               'authors': ['Einstein, A', 'Socrates', 'Stern, D K', 'Munger, C'],
                               'verified': ['-', '-', '-', '-'], 
                               'unverified': ['-', '-', '0000-0003-3041-2092', '-']}, 
+                             next_task.call_args[0][0].toJSON()
+                             )
+
+    def test_task_match_removed_claim(self):
+
+        with patch.object(self.app, 'retrieve_record') as retrieve_record, \
+                patch.object(self.app, 'retrieve_metadata') as retrieve_metadata, \
+                patch.object(self.app, 'record_claims') as record_claims, \
+                patch.object(tasks.requests, 'post') as post, \
+                patch.object(tasks.task_output_results, 'delay') as next_task:
+
+            retrieve_record.return_value = {'bibcode': 'BIBCODE22',
+                                            'authors': ['Einstein, A', 'Socrates', 'Stern, D K', 'Munger, C'],
+                                            'claims': {'verified': ['-', '-', '-', '-'],
+                                                       'unverified': ['-', '-', '0000-0003-3041-2092', '-']}}
+
+            retrieve_metadata.return_value = {'identifier': ['id1', 'id2'],
+                                              u'author_list': ['author one', 'author two', 'Stern, D K', 'author four']}
+
+            r = PropertyMock()
+            data = {'BIBCODE22': 'status'}
+            r.text = str(data)
+            r.json = lambda: data
+            r.status_code = 200
+            post.return_value = r
+
+            self.assertFalse(next_task.called)
+            tasks.task_match_claim({'status': u'removed', 'bibcode': 'BIBCODE22',
+                                    u'name': u'Stern, D K',
+                                    'provenance': u'provenance',
+                                    u'orcid_name': [u'Stern, Daniel'],
+                                    u'author_norm': [u'Stern, D'], u'author_status': None,
+                                    'orcidid': '0000-0003-3041-2092',
+                                    u'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],
+                                    u'author_id': 1, u'account_id': None})
+
+            self.assertEqual(('BIBCODE22',
+                              {'verified': ['-', '-', '-', '-'], 'unverified': ['-', '-', '-', '-']},
+                              ['Einstein, A', 'Socrates', 'Stern, D K', 'Munger, C']),
+                             record_claims.call_args[0])
+
+            self.assertEqual({'bibcode': 'BIBCODE22',
+                              'authors': ['Einstein, A', 'Socrates', 'Stern, D K', 'Munger, C'],
+                              'verified': ['-', '-', '-', '-'],
+                              'unverified': ['-', '-', '-', '-']},
                              next_task.call_args[0][0].toJSON()
                              )
             
