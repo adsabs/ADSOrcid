@@ -126,9 +126,6 @@ def task_index_orcid_profile(message):
             if claim.get('bibcode'):
                 claim['bibcode_verified'] = True
                 task_ingest_claim.delay(claim)
-            
-    # reschedule future check
-    task_index_orcid_profile.apply_async(args=(message,), countdown = app.conf.get('ORCID_PROFILE_RECHECK_WINDOW', 3600*24))
 
 
 
