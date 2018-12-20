@@ -52,7 +52,7 @@ def task_index_orcid_profile(message):
     # update profile table in microservice
     r = requests.get(app.conf.get('API_ORCID_UPDATE_PROFILE') % orcidid,
                      headers={'Accept': 'application/json',
-                              'Authorization': 'Bearer:%s' % app.conf.get('API_TOKEN')})
+                              'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
     if r.status_code != 200:
         logger.warning('Profile for {0} not updated.'.format(orcidid))
 
