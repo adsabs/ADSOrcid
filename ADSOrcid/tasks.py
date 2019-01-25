@@ -186,20 +186,21 @@ def task_match_claim(claim, **kwargs):
     
     cl = updater.update_record(rec, claim, app.conf.get('MIN_LEVENSHTEIN_RATIO', 0.9))
     if cl:
+        unique_bibs = list(set([bibcode] + identifiers))
         app.record_claims(bibcode, rec['claims'], rec['authors'])
         msg = OrcidClaims(authors=rec.get('authors'), bibcode=rec['bibcode'], 
                           verified=rec.get('claims', {}).get('verified', []),
                           unverified=rec.get('claims', {}).get('unverified', [])
                           )
         r = requests.post(app.conf.get('API_ORCID_UPDATE_BIB_STATUS') % claim.get('orcidid'),
-                        params={'bibcodes': [bibcode] + identifiers, 'status': ['verified']},
+                        params={'bibcodes': unique_bibs, 'status': 'verified'},
                         headers = {'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
         if r.status_code != 200:
             logger.warning('IDs {ids} for {orcidid} not updated to: verified'
-                           .format(ids=identifiers, orcidid=claim.get('orcidid')))
+                           .format(ids=unique_bibs, orcidid=claim.get('orcidid')))
         if len(r.json()) != 1:
             logger.warning('Number of updated bibcodes ({0}) does not match input ({1}) for {2}'.
-                           format(r.text, [bibcode]+identifiers, claim.get('orcidid')))
+                           format(r.text, unique_bibs, claim.get('orcidid')))
         task_output_results.delay(msg)
     else:
         logger.warning('Claim refused for bibcode:{0} and orcidid:{1}'
