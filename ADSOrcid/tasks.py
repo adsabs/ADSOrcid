@@ -193,7 +193,7 @@ def task_match_claim(claim, **kwargs):
                           unverified=rec.get('claims', {}).get('unverified', [])
                           )
         r = requests.post(app.conf.get('API_ORCID_UPDATE_BIB_STATUS') % claim.get('orcidid'),
-                        params={'bibcodes': unique_bibs, 'status': 'verified'},
+                        json={'bibcodes': unique_bibs, 'status': 'verified'},
                         headers = {'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
         if r.status_code != 200:
             logger.warning('IDs {ids} for {orcidid} not updated to: verified'

@@ -343,7 +343,7 @@ class ADSOrcidCelery(ADSCelery):
                         orcid_present[bibc.lower().strip()] = (bibc.strip(), get_date(ts.isoformat()), provenance, fvalues, author_list)
                     else:
                         r = requests.post(self._config.get('API_ORCID_UPDATE_BIB_STATUS') % orcidid,
-                                          params={'bibcodes': [fvalues], 'status': ['not in ADS']},
+                                          json={'bibcodes': [fvalues], 'status': 'not in ADS'},
                                           headers={'Authorization': 'Bearer {0}'.format(self._config.get('API_TOKEN'))})
                         if r.status_code != 200:
                             self.logger.warning('IDs {ids} for {orcidid} not updated to: not in ADS'
