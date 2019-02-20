@@ -343,15 +343,15 @@ class ADSOrcidCelery(ADSCelery):
                         orcid_present[bibc.lower().strip()] = (bibc.strip(), get_date(ts.isoformat()), provenance, fvalues, author_list)
                     else:
                         r = requests.post(self._config.get('API_ORCID_UPDATE_BIB_STATUS') % orcidid,
-                                          json={'bibcodes': [fvalues], 'status': 'not in ADS'},
+                                          json={'bibcodes': fvalues, 'status': 'not in ADS'},
                                           headers={'Authorization': 'Bearer {0}'.format(self._config.get('API_TOKEN'))})
                         if r.status_code != 200:
                             self.logger.warning('IDs {ids} for {orcidid} not updated to: not in ADS'
                                                 .format(ids=json.dumps(fvalues), orcidid=orcidid))
-                        if len(r.json()) != 1:
+                        elif len(r.json()) != 1:
                             self.logger.warning('Number of updated bibcodes ({0}) does not match input ({1}) for {2}'.
-                                                format(r.text, [fvalues], orcidid))
-                        self.logger.warning('Found no bibcode for: {orcidid}. {ids}'.format(ids=json.dumps(ids), orcidid=orcidid))
+                                                format(r.text, fvalues, orcidid))
+                        self.logger.warning('Found no bibcode for: {orcidid}, IDs: {ids}'.format(ids=json.dumps(fvalues), orcidid=orcidid))
                         
                 except KeyError, e:
                     self.logger.warning('Error processing a record: '

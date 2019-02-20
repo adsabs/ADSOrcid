@@ -717,6 +717,74 @@
                             "visibility": "PUBLIC"
                         }
                     ]
+                },
+                {
+                    "external-ids": {
+                        "external-id": [
+                            {
+                                "external-id-relationship": "SELF",
+                                "external-id-type": "other-id",
+                                "external-id-url": null,
+                                "external-id-value": "test-not-in-ADS"
+                            }
+                        ]
+                    },
+                    "last-modified-date": {
+                        "value": 1476747559382
+                    },
+                    "work-summary": [
+                        {
+                            "created-date": {
+                                "value": 1476747559382
+                            },
+                            "display-index": "0",
+                            "external-ids": {
+                                "external-id": [
+                                    {
+                                        "external-id-relationship": "SELF",
+                                        "external-id-type": "other-id",
+                                        "external-id-url": null,
+                                        "external-id-value": "test-not-in-ADS"
+                                    }
+                                ]
+                            },
+                            "last-modified-date": {
+                                "value": 1476747559382
+                            },
+                            "path": "/0000-0003-3041-2092/work/20000000",
+                            "publication-date": {
+                                "day": null,
+                                "media-type": null,
+                                "month": {
+                                    "value": "12"
+                                },
+                                "year": {
+                                    "value": "2018"
+                                }
+                            },
+                            "put-code": 27449390,
+                            "source": {
+                                "source-client-id": {
+                                    "host": "orcid.org",
+                                    "path": "APP-BA5POB6F5D7CTHX2",
+                                    "uri": "http://orcid.org/client/APP-BA5POB6F5D7CTHX2"
+                                },
+                                "source-name": {
+                                    "value": "self"
+                                },
+                                "source-orcid": null
+                            },
+                            "title": {
+                                "subtitle": null,
+                                "title": {
+                                    "value": "Test title"
+                                },
+                                "translated-title": null
+                            },
+                            "type": "JOURNAL_ARTICLE",
+                            "visibility": "PUBLIC"
+                        }
+                    ]
                 }
             ],
             "last-modified-date": {
