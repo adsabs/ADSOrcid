@@ -304,7 +304,10 @@ class TestAdsOrcidCelery(unittest.TestCase):
         
         orcidid = '0000-0003-3041-2092'
         def side_effect(x, search_identifiers=False):
-            return {'bibcode': x}
+            if len(x) == 19:
+                return {'bibcode': x}
+            else:
+                return -1
         with mock.patch.object(self.app, 'retrieve_orcid', 
                 return_value={'status': None, 'updated': None, 'name': None, 'created': '2009-09-03T20:56:35.450686+00:00', 
                               'facts': {}, 'orcidid': orcidid, 'id': 1, 'account_id': None} ) as harvest_author_info, \
