@@ -28,9 +28,7 @@ def query_solr(endpoint, query, start=0, rows=200, sort="date desc", fl='bibcode
          'start': start,
          'rows': rows,
          'wt': 'json',
-         'indent': 'true',
-         'hl': 'true',
-         'hl.fl': 'abstract,ack,body',
+         'indent': 'true'
          }
     if fl:
         d['fl'] = fl
@@ -39,7 +37,7 @@ def query_solr(endpoint, query, start=0, rows=200, sort="date desc", fl='bibcode
     if response.status_code == 200:
         results = response.json()
         return results
-    logger.warn('For query {}, there was a network problem: {0}\n'.format(query,response))
+    logger.warn('For query {0}, there was a network problem: {1}\n'.format(query,response))
     return None
 
 def get_max_lev(orcid_field='orcid_user'):

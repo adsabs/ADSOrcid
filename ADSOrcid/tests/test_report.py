@@ -5,7 +5,6 @@
 import unittest
 import os
 import json
-import pdb
 from mock import patch, PropertyMock
 from ADSOrcid import report, app
 from ADSOrcid.models import Base, ClaimsLog

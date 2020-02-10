@@ -100,6 +100,8 @@ def claimed_records(debug=False,test=False):
     """
     if test:
         logger = setup_logging('test_claimed')
+    else:
+        logger = setup_logging('reporting')
 
     config = {}
     config.update(load_config())
@@ -168,7 +170,7 @@ def claimed_records(debug=False,test=False):
     orcid_bibcodes = bibcode_pub.union(bibcode_user).union(bibcode_other)
     logger.info('Total number of records with any ORCID claims: {}'.format(len(orcid_bibcodes)))
 
-def num_claims(app,n_days=7,test=False):
+def num_claims(app=app,n_days=7,test=False):
     """
     Reporting function; checks the postgres database for:
         - number of unique ORCID IDs who have created claims in the given range of time
@@ -187,6 +189,8 @@ def num_claims(app,n_days=7,test=False):
 
     if test:
         logger = setup_logging('test_num_claimed')
+    else:
+        logger = setup_logging('reporting')
 
     now = datetime.datetime.now(tzutc())
     beginning = now - datetime.timedelta(days=n_days)
@@ -228,6 +232,8 @@ def num_refused_claims(n_days=7,test=False):
 
     if test:
         logger = setup_logging('test_kibana')
+    else:
+        logger = setup_logging('reporting')
 
     query = '"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@message:\\"Claim refused\\""'
 
@@ -248,6 +254,8 @@ def num_missing_profile(n_days=7,test=False):
 
     if test:
         logger = setup_logging('test_kibana')
+    else:
+        logger = setup_logging('reporting')
 
     query = '"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@message:\\"Missing profile for\\""'
 
@@ -265,7 +273,7 @@ if __name__ == '__main__':
 
     config = {}
     config.update(load_config())
-    claimed_records()
+    claimed_records(debug=True)
     num_claims(n_days=7)
     num_refused_claims(n_days=7)
     num_missing_profile(n_days=7)
