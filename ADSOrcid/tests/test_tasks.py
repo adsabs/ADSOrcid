@@ -37,7 +37,7 @@ class TestWorkers(unittest.TestCase):
     def test_task_index_orcid_profile(self):
         
         with patch.object(self.app, 'retrieve_orcid') as retrieve_orcid, \
-            patch.object(tasks.requests, 'get') as get, \
+            patch.object(tasks.app.client, 'get') as get, \
             patch.object(self.app, 'get_claims') as get_claims, \
             patch.object(self.app, 'insert_claims') as insert_claims, \
             patch.object(tasks.task_index_orcid_profile, 'apply_async') as task_index_orcid_profile, \
@@ -125,7 +125,7 @@ class TestWorkers(unittest.TestCase):
         
         with patch.object(self.app, 'retrieve_record') as retrieve_record, \
             patch.object(self.app, 'record_claims') as record_claims, \
-            patch.object(tasks.requests, 'post') as post, \
+            patch.object(tasks.app.client, 'post') as post, \
             patch.object(tasks.task_output_results, 'delay') as next_task:
             
             retrieve_record.return_value = {'bibcode': 'BIBCODE22',
@@ -167,7 +167,7 @@ class TestWorkers(unittest.TestCase):
         with patch.object(self.app, 'retrieve_record') as retrieve_record, \
                 patch.object(self.app, 'retrieve_metadata') as retrieve_metadata, \
                 patch.object(self.app, 'record_claims') as record_claims, \
-                patch.object(tasks.requests, 'post') as post, \
+                patch.object(tasks.app.client, 'post') as post, \
                 patch.object(tasks.task_output_results, 'delay') as next_task:
 
             retrieve_record.return_value = {'bibcode': 'BIBCODE22',
@@ -210,7 +210,7 @@ class TestWorkers(unittest.TestCase):
 
     def test_task_check_orcid_updates(self):
         
-        with patch.object(tasks.requests, 'get') as get, \
+        with patch.object(tasks.app.client, 'get') as get, \
             patch.object(tasks.task_index_orcid_profile, 'delay') as next_task, \
             patch.object(tasks.task_check_orcid_updates, 'apply_async') as recheck_task:
             

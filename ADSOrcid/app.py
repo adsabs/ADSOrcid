@@ -16,7 +16,6 @@ import datetime
 import json
 import os
 import random
-import requests
 import time
 import traceback
 
@@ -166,7 +165,7 @@ class ADSOrcidCelery(ADSCelery):
 
 
     def _get_ads_orcid_profile(self, orcidid, api_token, api_url):
-        r = requests.get(api_url,
+        r = self.client.get(api_url,
                  params={'reload': True},
                  headers={'Accept': 'application/json', 'Authorization': 'Bearer:%s' % api_token})
         if r.status_code == 200:
@@ -342,7 +341,7 @@ class ADSOrcidCelery(ADSCelery):
                             provenance = 'orcid-profile'
                         orcid_present[bibc.lower().strip()] = (bibc.strip(), get_date(ts.isoformat()), provenance, fvalues, author_list)
                     else:
-                        r = requests.post(self._config.get('API_ORCID_UPDATE_BIB_STATUS') % orcidid,
+                        r = self.client.post(self._config.get('API_ORCID_UPDATE_BIB_STATUS') % orcidid,
                                           json={'bibcodes': fvalues, 'status': 'not in ADS'},
                                           headers={'Authorization': 'Bearer {0}'.format(self._config.get('API_TOKEN'))})
                         if r.status_code != 200:
@@ -409,7 +408,7 @@ class ADSOrcidCelery(ADSCelery):
     
     @cachetools.cached(orcid_cache)
     def get_public_orcid_profile(self, orcidid):
-        r = requests.get(self._config.get('API_ORCID_PROFILE_ENDPOINT') % orcidid,
+        r = self.client.get(self._config.get('API_ORCID_PROFILE_ENDPOINT') % orcidid,
                      headers={'Accept': 'application/json'})
         if r.status_code != 200:
             return None
@@ -418,7 +417,7 @@ class ADSOrcidCelery(ADSCelery):
     
     @cachetools.cached(ads_cache)
     def get_ads_orcid_profile(self, orcidid):
-        r = requests.get(self._config.get('API_ORCID_EXPORT_PROFILE') % orcidid,
+        r = self.client.get(self._config.get('API_ORCID_EXPORT_PROFILE') % orcidid,
                      headers={'Accept': 'application/json', 'Authorization': 'Bearer:%s' % self._config.get('API_TOKEN')})
         if r.status_code != 200:
             return None
@@ -538,7 +537,7 @@ class ADSOrcidCelery(ADSCelery):
                     
         # search for the orcidid in our database (but only the publisher populated fiels)
         # we can't trust other fiels to bootstrap our database
-        r = requests.get(
+        r = self.client.get(
                     '%(endpoint)s?q=%(query)s&fl=author,author_norm,orcid_pub&rows=100&sort=pubdate+desc' % \
                     {
                      'endpoint': self._config.get('API_SOLR_QUERY_ENDPOINT'),
@@ -625,7 +624,7 @@ class ADSOrcidCelery(ADSCelery):
                 'q': search_identifiers and 'identifier:"{0}"'.format(bibcode) or 'bibcode:"{0}"'.format(bibcode),
                 'fl': 'author,bibcode,identifier'
                 }
-        r = requests.get(self._config.get('API_SOLR_QUERY_ENDPOINT'),
+        r = self.client.get(self._config.get('API_SOLR_QUERY_ENDPOINT'),
              params=params,
              headers={'Accept': 'application/json', 'Authorization': 'Bearer:%s' % self._config.get('API_TOKEN')})
         if r.status_code != 200:
