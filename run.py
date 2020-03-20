@@ -16,7 +16,6 @@ import time
 import argparse
 import logging
 import traceback
-import requests
 import warnings
 from requests.packages.urllib3 import exceptions
 warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)

@@ -133,7 +133,7 @@ class TestReport(unittest.TestCase):
         if os.path.exists(kibana_log):
             os.remove(kibana_log)
 
-        with patch.object(report.requests,'post') as post:
+        with patch.object(report.app.client, 'post') as post:
             data = {u'responses': [{u'hits': {u'total': 5},
                                     u'status': 200}]}
             resp = PropertyMock()

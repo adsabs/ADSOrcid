@@ -8,7 +8,6 @@ from ADSOrcid.exceptions import ProcessingException, IgnorableException
 from ADSOrcid.models import KeyValue
 from kombu import Queue
 import datetime
-import requests
 import os
 
 app = app_module.ADSOrcidCelery('orcid-pipeline', proj_home=os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
@@ -50,9 +49,9 @@ def task_index_orcid_profile(message):
     author = app.retrieve_orcid(orcidid)
 
     # update profile table in microservice
-    r = requests.get(app.conf.get('API_ORCID_UPDATE_PROFILE') % orcidid,
-                     headers={'Accept': 'application/json',
-                              'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
+    r = app.client.get(app.conf.get('API_ORCID_UPDATE_PROFILE') % orcidid,
+                       headers={'Accept': 'application/json',
+                                'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
     if r.status_code != 200:
         logger.warning('Profile for {0} not updated.'.format(orcidid))
 
@@ -192,9 +191,9 @@ def task_match_claim(claim, **kwargs):
                           verified=rec.get('claims', {}).get('verified', []),
                           unverified=rec.get('claims', {}).get('unverified', [])
                           )
-        r = requests.post(app.conf.get('API_ORCID_UPDATE_BIB_STATUS') % claim.get('orcidid'),
-                        json={'bibcodes': unique_bibs, 'status': 'verified'},
-                        headers = {'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
+        r = app.client.post(app.conf.get('API_ORCID_UPDATE_BIB_STATUS') % claim.get('orcidid'),
+                            json={'bibcodes': unique_bibs, 'status': 'verified'},
+                            headers={'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
         if r.status_code != 200:
             logger.warning('IDs {ids} for {orcidid} not updated to: verified'
                            .format(ids=unique_bibs, orcidid=claim.get('orcidid')))
@@ -272,9 +271,9 @@ def task_check_orcid_updates(msg):
             
             # increase the timestamp by one microsec and get new updates
             latest_point = latest_point + datetime.timedelta(microseconds=1)
-            r = requests.get(app.conf.get('API_ORCID_UPDATES_ENDPOINT') % latest_point.isoformat(),
-                        params={'fields': ['orcid_id', 'updated', 'created']},
-                        headers = {'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
+            r = app.client.get(app.conf.get('API_ORCID_UPDATES_ENDPOINT') % latest_point.isoformat(),
+                               params={'fields': ['orcid_id', 'updated', 'created']},
+                               headers={'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
             
             if r.status_code != 200:
                 logger.error('Failed getting {0}\n{1}'.format(

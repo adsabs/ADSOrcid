@@ -10,7 +10,6 @@ import cachetools
 import time
 import pytz
 import urllib3
-import requests
 
 app = tasks.app
 logger = setup_logging('reporting')
@@ -77,7 +76,7 @@ def query_Kibana(query='"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@me
     # set to bypass SSL cert problem w/ Kibana
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    resp = requests.post(url, data=data, headers=header, verify=False)
+    resp = app.client.post(url, data=data, headers=header, verify=False)
 
     if resp.status_code == 200:
         results = resp.json()

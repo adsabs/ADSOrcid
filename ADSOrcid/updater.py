@@ -10,7 +10,6 @@ from datetime import timedelta
 from sqlalchemy.sql.expression import and_
 import Levenshtein
 import json
-import requests
 
 
 logger = setup_logging('updater')     
@@ -256,9 +255,9 @@ def get_all_touched_profiles(app, since='1974-11-09T22:56:52.518001Z', max_failu
     while True:
         # increase the timestamp by one microsec and get new updates
         latest_point = latest_point + timedelta(microseconds=1)
-        r = requests.get(app.conf.get('API_ORCID_UPDATES_ENDPOINT') % latest_point.isoformat(),
-                    params={'fields': ['orcid_id', 'updated', 'created']},
-                    headers = {'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
+        r = app.client.get(app.conf.get('API_ORCID_UPDATES_ENDPOINT') % latest_point.isoformat(),
+                           params={'fields': ['orcid_id', 'updated', 'created']},
+                           headers={'Authorization': 'Bearer {0}'.format(app.conf.get('API_TOKEN'))})
     
         if r.status_code != 200:
             cons_failures += 1

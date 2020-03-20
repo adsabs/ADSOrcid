@@ -5,7 +5,6 @@ import numpy as np
 import Levenshtein
 import sys
 import os
-import requests
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib import pyplot as py
@@ -33,7 +32,7 @@ def query_solr(endpoint, query, start=0, rows=200, sort="date desc", fl='bibcode
     if fl:
         d['fl'] = fl
 
-    response = requests.get(endpoint, params=d)
+    response = app.client.get(endpoint, params=d)
     if response.status_code == 200:
         results = response.json()
         return results
