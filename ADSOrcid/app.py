@@ -1,7 +1,7 @@
 
 
 from .models import ClaimsLog, Records, AuthorInfo, ChangeLog
-from adsputils import get_date, setup_logging, load_config, ADSCelery, u2asc
+from adsputils import get_date, ADSCelery, u2asc
 from ADSOrcid import names
 from ADSOrcid.exceptions import IgnorableException
 from celery import Celery
@@ -39,12 +39,12 @@ def clear_caches():
 
 
 class ADSOrcidCelery(ADSCelery):
-    
-    
+
+
     def insert_claims(self, claims):
         """
         Build a batch of claims and saves them into a database
-        
+
         :param: claims - list of json values, with claims
                        - or list of claims (ClaimLog) instances
         :return number of claims that were successfuly added
@@ -63,18 +63,18 @@ class ADSOrcidCelery(ADSCelery):
             session.commit()
             res = [x.toJSON() for x in res]
         return res
-    
-    def create_claim(self, 
-                 bibcode=None, 
-                 orcidid=None, 
-                 provenance=None, 
-                 status=None, 
-                 date=None, 
+
+    def create_claim(self,
+                 bibcode=None,
+                 orcidid=None,
+                 provenance=None,
+                 status=None,
+                 date=None,
                  force_new=True,
                  **kwargs):
         """
         Inserts (or updates) ClaimLog entry.
-        
+
         :return: ClaimsLog instance (however this is only for reading, you should
             not try to do anything with it; the session will have been closed already)
         """
@@ -83,11 +83,11 @@ class ADSOrcidCelery(ADSCelery):
             date = get_date(date)
         if status and status.lower() not in ALLOWED_STATUS:
             raise Exception('Unknown status %s' % status)
-        
+
         if not date or force_new is True: # we don't need to verify the record exists
-            return ClaimsLog(bibcode=bibcode, 
+            return ClaimsLog(bibcode=bibcode,
                       orcidid=orcidid,
-                      provenance=provenance, 
+                      provenance=provenance,
                       status=status,
                       created=date or get_date())
         else:
@@ -99,18 +99,18 @@ class ADSOrcidCelery(ADSCelery):
                     session.expunge(f)
                     return f
                 else:
-                    return ClaimsLog(bibcode=bibcode, 
+                    return ClaimsLog(bibcode=bibcode,
                       orcidid=orcidid,
-                      provenance=provenance, 
+                      provenance=provenance,
                       status=status,
                       created=date)
 
 
-    def import_recs(self, input_file, default_provenance=None, 
+    def import_recs(self, input_file, default_provenance=None,
                 default_status='claimed', collector=None):
         """
         Imports (creates log records) of claims from
-        :param: input_file - String, path to the file with the following 
+        :param: input_file - String, path to the file with the following
                 information (tab delimited):
                     bibcode
                     orcid_id
@@ -124,25 +124,25 @@ class ADSOrcidCelery(ADSCelery):
                 into it
         :type: array
         """
-        
+
         if not os.path.exists(input_file):
             raise Exception('{file} does not exist'.format(
                                file=input_file
                                ))
         if collector is not None:
             assert(isinstance(collector, list))
-            
+
         if default_provenance is None:
             default_provenance = os.path.abspath(input_file)
-            
+
         def rec_builder(bibcode=None, orcidid=None, provenance=None, status=None, date=None):
             assert(bibcode and orcidid)
-            return ClaimsLog(bibcode=bibcode, 
+            return ClaimsLog(bibcode=bibcode,
                           orcidid=orcidid,
-                          provenance=provenance or default_provenance, 
+                          provenance=provenance or default_provenance,
                           status=status or default_status,
                           created=date and get_date(date) or get_date())
-            
+
         i = 0
         with open(input_file, 'r') as fi:
             with self.session_scope() as session:
@@ -190,14 +190,14 @@ class ADSOrcidCelery(ADSCelery):
                 return v
 
 
-    def get_claims(self, orcidid, api_token, api_url, force=False, 
+    def get_claims(self, orcidid, api_token, api_url, force=False,
                       orcid_identifiers_order=None):
         """
         Fetch a fresh profile from the orcid-service and compare
         it against the state of the storage (diff). Return the docs
         that need updating, and removal
-        
-    
+
+
         :param orcidid
             - string, orcid identifier
         :param: api_token
@@ -212,7 +212,7 @@ class ADSOrcidCelery(ADSCelery):
             - dict, helps to sort claims by their identifies.
                 (e.g. to say that bibcodes have higher priority than
                 dois)
-        :return: 
+        :return:
             - updated: dict of bibcodes that were updated
                 - keys are lowercased bibcodes
                 - values are (bibcode, timestamp)
@@ -220,24 +220,24 @@ class ADSOrcidCelery(ADSCelery):
                 - keys are lowercased bibcodes
                 - values are (bibcode, timestamp)
         """
-        
-        
-        
-    
-        # make sure the author is there (even if without documents) 
+
+
+
+
+        # make sure the author is there (even if without documents)
         author = self.retrieve_orcid(orcidid) # @UnusedVariable
         data = self._get_ads_orcid_profile(orcidid, api_token, api_url)
-        
+
         if data is None:
             return {}, {}, {} #TODO: remove all existing claims?
-        
+
         profile = data.get('profile', {})
         if not profile:
             return {}, {}, {} #TODO: remove all existing claims?
-        
-    
+
+
         with self.session_scope() as session:
-              
+
             # version needs to be verified as previous ORCID API versions returned different structure; these may be
             # caught if we force update without a user-triggered refresh
             version = self._check_profile_version(profile)
@@ -262,12 +262,12 @@ class ADSOrcidCelery(ADSCelery):
                 updt = get_date(updt.isoformat())
             except KeyError:
                 updt = get_date()
-                                    
+
             # find the most recent #full-import record
             last_update = session.query(ClaimsLog).filter(
                 and_(ClaimsLog.status == '#full-import', ClaimsLog.orcidid == orcidid)
                 ).order_by(ClaimsLog.id.desc()).first()
-                
+
             if last_update is None:
                 q = session.query(ClaimsLog).filter_by(orcidid=orcidid).order_by(ClaimsLog.id.asc())
             else:
@@ -280,8 +280,8 @@ class ADSOrcidCelery(ADSCelery):
                 q = session.query(ClaimsLog).filter(
                     and_(ClaimsLog.orcidid == orcidid, ClaimsLog.id > last_update.id)) \
                     .order_by(ClaimsLog.id.asc())
-                        
-            
+
+
             # now get info about each record #TODO: enhance the matching (and refactor)
             # we'll try to match identifiers against our own API; if a document is found
             # it will be added to the `orcid_present` with corresponding timestamp (cdate)
@@ -294,7 +294,7 @@ class ADSOrcidCelery(ADSCelery):
                     else:
                         ids = w['work-external-identifiers']['work-external-identifier']
                     seek_ids = []
-                    
+
                     # painstakingly check ids (start from a bibcode) if we can find it
                     # we'll send it through (but start from bibcodes, then dois, arxiv...)
                     fmap = orcid_identifiers_order
@@ -309,10 +309,10 @@ class ADSOrcidCelery(ADSCelery):
                             if xtype:
                                 seek_ids.append((fmap.get(xtype.lower().strip(), fmap.get('*', -1)),
                                                  x['work-external-identifier-id']['value']))
-                    
+
                     if len(seek_ids) == 0:
                         continue
-                    
+
                     seek_ids = sorted(seek_ids, key=lambda x: x[0], reverse=True)
                     fvalues = []
                     for _priority, fvalue in seek_ids:
@@ -328,8 +328,8 @@ class ADSOrcidCelery(ADSCelery):
                         except Exception, e:
                             self.logger.warning('Exception while searching for matching bibcode for: {}'.format(fvalue))
                             self.logger.warning(e.message)
-                            
-                    
+
+
                     if bibc:
                         # would you believe that orcid doesn't return floats?
                         ts = str(w['last-modified-date']['value'])
@@ -351,7 +351,7 @@ class ADSOrcidCelery(ADSCelery):
                             self.logger.warning('Number of updated bibcodes ({0}) does not match input ({1}) for {2}'.
                                                 format(r.text, fvalues, orcidid))
                         self.logger.warning('Found no bibcode for: {orcidid}, IDs: {ids}'.format(ids=json.dumps(fvalues), orcidid=orcidid))
-                        
+
                 except KeyError, e:
                     self.logger.warning('Error processing a record: '
                         '{0} ({1})'.format(w,
@@ -362,12 +362,12 @@ class ADSOrcidCelery(ADSCelery):
                         '{0} ({1})'.format(w,
                                            traceback.format_exc()))
                     continue
-    
-            
+
+
             # find all records we have processed at some point
             updated = {}
             removed = {}
-            
+
             for cl in q.all():
                 if not cl.bibcode:
                     continue
@@ -380,19 +380,19 @@ class ADSOrcidCelery(ADSCelery):
                     updated[bibc] = (cl.bibcode, get_date(cl.created))
                     if bibc in removed:
                         del removed[bibc]
-            
+
             return orcid_present, updated, removed
-        
-    
-        
-    @cachetools.cached(cache)  
+
+
+
+    @cachetools.cached(cache)
     def retrieve_orcid(self, orcid):
         """
         Finds (or creates and returns) model of ORCID
         from the dbase. It will automatically update our
         knowledge about the author every time it gets
         called.
-        
+
         :param orcid - String (orcid id)
         :return - OrcidModel datastructure
         """
@@ -403,9 +403,9 @@ class ADSOrcidCelery(ADSCelery):
             u = self.create_orcid(orcid)
             session.add(u)
             session.commit()
-            
+
             return session.query(AuthorInfo).filter_by(orcidid=orcid).first().toJSON()
-    
+
     @cachetools.cached(orcid_cache)
     def get_public_orcid_profile(self, orcidid):
         r = self.client.get(self._config.get('API_ORCID_PROFILE_ENDPOINT') % orcidid,
@@ -414,7 +414,7 @@ class ADSOrcidCelery(ADSCelery):
             return None
         else:
             return r.json()
-    
+
     @cachetools.cached(ads_cache)
     def get_ads_orcid_profile(self, orcidid):
         r = self.client.get(self._config.get('API_ORCID_EXPORT_PROFILE') % orcidid,
@@ -423,18 +423,18 @@ class ADSOrcidCelery(ADSCelery):
             return None
         else:
             return r.json()
-    
-    
+
+
     def update_author(self, author):
-        """Updates existing AuthorInfo records. 
-        
+        """Updates existing AuthorInfo records.
+
         It will check for new information. If there is a difference,
         updates the record and also records the old values.
-        
+
         :param: author - AuthorInfo instance
-        
+
         :return: AuthorInfo object
-        
+
         :sideeffect: Will insert new records (ChangeLog) and also update
          the author instance
         """
@@ -442,24 +442,24 @@ class ADSOrcidCelery(ADSCelery):
             new_facts = self.harvest_author_info(author.orcidid)
         except:
             return author.toJSON()
-        
+
         info = author.toJSON()
         with self.session_scope() as session:
             old_facts = info['facts']
             attrs = set(new_facts.keys())
             attrs = attrs.union(old_facts.keys())
             is_dirty = False
-            
+
             for attname in attrs:
                 if old_facts.get(attname, None) != new_facts.get(attname, None):
-                    session.add(ChangeLog(key=u'{0}:update:{1}'.format(author.orcidid, attname), 
+                    session.add(ChangeLog(key=u'{0}:update:{1}'.format(author.orcidid, attname),
                                oldvalue=json.dumps(old_facts.get(attname, None)),
                                newvalue=json.dumps(new_facts.get(attname, None))))
                     is_dirty = True
-            
+
             if bool(author.account_id) != bool(new_facts.get('authorized', False)):
-                author.account_id = new_facts.get('authorized', False) and 1 or None 
-            
+                author.account_id = new_facts.get('authorized', False) and 1 or None
+
             if is_dirty:
                 author.facts = json.dumps(new_facts)
                 author.name = new_facts.get('name', author.name)
@@ -476,16 +476,16 @@ class ADSOrcidCelery(ADSCelery):
         (this endpoint will query the API to discover
         information about the author; so it is potentially
         expensive)
-        
+
         :param: orcid - String, ORCID ID
         :param: name - String, name of the author (optional)
         :param: facts - dictionary of other facts we want to
             know/store (about the author)
-        
+
         :return: AuthorInfo object
         """
         name = names.cleanup_name(name)
-        
+
         # retrieve profile from our own orcid microservice
         if not name or not facts:
             profile = self.harvest_author_info(orcid, name, facts)
@@ -493,29 +493,29 @@ class ADSOrcidCelery(ADSCelery):
             if not name:
                 raise IgnorableException('Cant find an author name for orcid-id: {}'.format(orcid))
             facts = profile
-    
+
         return AuthorInfo(orcidid=orcid, name=name, facts=json.dumps(facts), account_id=facts.get('authorized', None) and 1 or None)
-    
-    
+
+
     def harvest_author_info(self, orcidid, name=None, facts=None):
         """
-        Does the hard job of querying public and private 
+        Does the hard job of querying public and private
         API's for whatever information we want to collect
         about the ORCID ID;
-        
+
         At this stage, we want to mainly retrieve author
         names (ie. variations of the author name)
-        
+
         :param: orcidid - String
         :param: name - String, name of the author (optional)
         :param: facts - dict, info about the author
-        
+
         :return: dict with various keys: name, author, author_norm, orcid_name
                 (if available)
         """
-        
+
         author_data = {}
-        
+
         # first verify the public ORCID profile
         j = self.get_public_orcid_profile(orcidid)
         if j is None:
@@ -529,12 +529,12 @@ class ADSOrcidCelery(ADSCelery):
 
                 fname = (j['person']['name'].get('family-name', {}) or {}).get('value', None)
                 gname = (j['person']['name'].get('given-names', {}) or {}).get('value', None)
-                
+
                 if fname and gname:
                     author_data['orcid_name'] = ['%s, %s' % (fname, gname)]
                     author_data['name'] = author_data['orcid_name'][0]
-                
-                    
+
+
         # search for the orcidid in our database (but only the publisher populated fiels)
         # we can't trust other fiels to bootstrap our database
         r = self.client.get(
@@ -544,12 +544,12 @@ class ADSOrcidCelery(ADSCelery):
                      'query' : 'orcid_pub:%s' % names.cleanup_orcidid(orcidid),
                     },
                     headers={'Authorization': 'Bearer %s' % self._config.get('API_TOKEN')})
-        
+
         if r.status_code != 200:
             self.logger.error('Failed getting data from our own API! (err: %s)' % r.status_code)
             raise Exception(r.text)
-        
-        
+
+
         # go through the documents and collect all the names that correspond to the ORCID
         master_set = {}
         for doc in r.json()['response']['docs']:
@@ -560,10 +560,10 @@ class ADSOrcidCelery(ADSCelery):
                     if not master_set[k].has_key(n):
                         master_set[k][n] = 0
                     master_set[k][n] += 1
-        
+
         # get ADS data about the user
         # 0000-0003-3052-0819 | {"authorizedUser": true, "currentAffiliation": "Australian Astronomical Observatory", "nameVariations": ["Green, Andrew W.", "Green, Andy", "Green, Andy W."]}
-    
+
         r = self.get_ads_orcid_profile(orcidid)
         if r:
             _author = r
@@ -579,7 +579,7 @@ class ADSOrcidCelery(ADSCelery):
                     x = names.cleanup_name(x)
                     v = master_set['author'].get(x, 1)
                     master_set['author'][x] = v
-        
+
         # elect the most frequent name to become the 'author name'
         # TODO: this will choose the normalized names (as that is shorter)
         # maybe we should choose the longest (but it is not too important
@@ -591,7 +591,7 @@ class ADSOrcidCelery(ADSCelery):
             for name, freq in v.items():
                 if freq > mx:
                     author_data['name'] = name
-        
+
         # automatically add the short names, because they make us find
         # more matches
         short_names = set()
@@ -613,9 +613,9 @@ class ADSOrcidCelery(ADSCelery):
             author_data['ascii_name'] = sorted(list(asc_names))
 
         return author_data
-    
-    
-    @cachetools.cached(bibcode_cache) 
+
+
+    @cachetools.cached(bibcode_cache)
     def retrieve_metadata(self, bibcode, search_identifiers=False):
         """
         From the API retrieve the set of metadata we want to know about the record.
@@ -649,9 +649,9 @@ class ADSOrcidCelery(ADSCelery):
                         if ir.lower().strip() == bibcode.lower().strip():
                             return d
                 raise IgnorableException(u'More than one document found for {0}'.format(bibcode))
-        
-    
-    
+
+
+
     def retrieve_record(self, bibcode, authors):
         """
         Gets a record from the database (creates one if necessary)
@@ -662,38 +662,38 @@ class ADSOrcidCelery(ADSCelery):
                 r = Records(bibcode=bibcode)
                 session.add(r)
             out = r.toJSON()
-            
+
             if out.get('authors') != authors:
                 r.authors = json.dumps(authors)
                 out['authors'] = authors
-            
+
             session.commit()
             return out
-        
-        
+
+
     def record_claims(self, bibcode, claims, authors=None):
         """
         Stores results of the processing in the database.
-        
+
         :param: bibcode
         :type: string
         :param: claims
         :type: dict
         """
-        
+
         if not isinstance(claims, basestring):
             claims = json.dumps(claims)
         if authors and not isinstance(authors, basestring):
             authors = json.dumps(authors)
-            
+
         with self.session_scope() as session:
             if not isinstance(claims, basestring):
                 claims = json.dumps(claims)
             r = session.query(Records).filter_by(bibcode=bibcode).first()
             if r is None:
                 t = get_date()
-                r = Records(bibcode=bibcode, 
-                            claims=claims, 
+                r = Records(bibcode=bibcode,
+                            claims=claims,
                             created=t,
                             updated=t,
                             authors=authors
@@ -711,17 +711,17 @@ class ADSOrcidCelery(ADSCelery):
     def mark_processed(self, bibcode):
         """Updates the date on which the record has been processed (i.e.
         something has consumed it
-        
+
         :param: bibcode
         :type: str
-        
+
         :return: None
         """
-        
+
         with self.session_scope() as session:
             r = session.query(Records).filter_by(bibcode=bibcode).first()
             if r is None:
                 raise IgnorableException('Nonexistant record for {0}'.format(bibcode))
             r.processed = get_date()
             session.commit()
-            return True   
+            return True
