@@ -4,6 +4,7 @@ from ADSOrcid.models import ClaimsLog
 from levenshtein_default import query_solr
 from sqlalchemy import func, and_, distinct
 from dateutil.tz import tzutc
+import os
 import fnmatch
 import datetime
 import cachetools
@@ -11,10 +12,23 @@ import time
 import pytz
 import urllib3
 
+# ============================= INITIALIZATION ==================================== #
+# - Use app logger:
+#import logging
+#logger = logging.getLogger('orcid-pipeline')
+# - Or individual logger for this file:
+from adsputils import setup_logging, load_config
+proj_home = os.path.realpath(os.path.join(os.path.dirname(__file__), '../'))
+config = load_config(proj_home=proj_home)
+logger = setup_logging(__name__, proj_home=proj_home,
+                        level=config.get('LOGGING_LEVEL', 'INFO'),
+                        attach_stdout=config.get('LOG_STDOUT', False))
+
 app = tasks.app
-logger = setup_logging('reporting')
 
 records_cache = cachetools.TTLCache(maxsize=1024, ttl=3600, timer=time.time, missing=None, getsizeof=None)
+
+# =============================== FUNCTIONS ======================================= #
 
 @cachetools.cached(records_cache)
 def query_records(start=0,rows=1000):
