@@ -5,7 +5,7 @@ LOGGING_LEVEL = 'DEBUG'
 
 # Connection to the database where we save orcid-claims (this database
 # serves as a running log of claims and storage of author-related
-# information). It is not consumed by others (ie. we 'push' results) 
+# information). It is not consumed by others (ie. we 'push' results)
 # SQLALCHEMY_URL = 'postgres://docker:docker@localhost:6432/docker'
 SQLALCHEMY_URL = 'sqlite:///'
 SQLALCHEMY_ECHO = False
@@ -14,10 +14,10 @@ SQLALCHEMY_ECHO = False
 # Celery related configuration
 # All work we do is concentrated into one exchange (the queues are marked
 # by topics, e.g. ads.orcid.claims); The queues will be created automatically
-# based on the workers' definition. If 'durable' = True, it means that the 
+# based on the workers' definition. If 'durable' = True, it means that the
 # queue is created as permanent *AND* the worker will publish 'permanent'
 # messages. Ie. if rabbitmq goes down/restarted, the uncomsumed messages will
-# still be there 
+# still be there
 
 
 #CELERY_DEFAULT_EXCHANGE = 'orcid_pipeline'
@@ -39,7 +39,7 @@ OUTPUT_TASKNAME = 'adsmp.tasks.task_update_record'
 #OUTPUT_EXCHANGE = 'master_pipeline'
 OUTPUT_QUEUE = 'update-record'
 
-               
+
 
 
 # URLs to get data from our own API, the token must give us
