@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from builtins import str
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP
 from sqlalchemy.types import Enum
@@ -45,7 +46,7 @@ class ClaimsLog(Base):
     def toJSON(self):
         return {'id': self.id, 'orcidid': self.orcidid,
                 'bibcode': self.bibcode, 'status': self.status,
-                'provenance': unicode(self.provenance), 'created': self.created and get_date(self.created).isoformat() or None
+                'provenance': str(self.provenance), 'created': self.created and get_date(self.created).isoformat() or None
                 }
     
     

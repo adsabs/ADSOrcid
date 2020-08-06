@@ -1,7 +1,9 @@
 
+from builtins import range
 from ADSOrcid.models import AuthorInfo, ChangeLog
 from copy import deepcopy
 from .exceptions import IgnorableException
+import sys
 """
 Tools for enhancing our knowledge about orcid ids (authors).
 """
@@ -18,7 +20,7 @@ def build_short_forms(orig_name):
         return [] # refuse to do anything
     surname, other_names = orig_name.split(',', 1)
     ret = set()
-    parts = filter(lambda x: len(x), other_names.split(' '))
+    parts = [x for x in other_names.split(' ') if len(x)]
     if len(parts) == 1 and len(parts[0]) == 1:
         return []
     for i in range(len(parts)):
@@ -70,7 +72,11 @@ def cleanup_name(name):
     """
     if not name:
         return u''
-    if not isinstance(name, unicode):
+    if sys.version_info > (3,):
+        test_type = str
+    else:
+        test_type = unicode
+    if not isinstance(name, test_type):
         name = name.decode('utf8') # assumption, but ok...
     name = name.replace(u'.', u'')
     name = u' '.join(name.split())

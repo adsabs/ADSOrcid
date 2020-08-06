@@ -1,3 +1,4 @@
+from builtins import range
 from adsputils import load_config, setup_logging
 from ADSOrcid import tasks
 from ADSOrcid.models import ClaimsLog

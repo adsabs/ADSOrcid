@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from past.builtins import basestring
 import pika
 import json
 import sys
@@ -28,7 +30,7 @@ def run(inputfile):
     channel = connection.channel()
     channel.queue_declare(queue='ads.orcid.fresh-claims', durable=True)
     
-    print 'established connection to', connection, channel
+    print('established connection to', connection, channel)
 
     if not os.path.exists(inputfile):
         raise Exception('%s does not exist' % inputfile)
@@ -38,11 +40,11 @@ def run(inputfile):
         for l in f:
             l = l.strip()
             if l:
-                print 'sending', l
+                print('sending', l)
                 publish(channel, {'orcidid': l})
                 i += 1
     
-    print 'done submitting', i, 'orcidids'
+    print('done submitting', i, 'orcidids')
 
 
 if __name__ == '__main__':

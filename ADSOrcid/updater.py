@@ -3,6 +3,7 @@
 Library for updating papers (db claims/records).
 """
 
+from builtins import str
 from ADSOrcid import names
 from ADSOrcid.models import ClaimsLog, Records
 from adsputils import get_date, setup_logging, u2asc
@@ -11,6 +12,7 @@ from sqlalchemy.sql.expression import and_
 import Levenshtein
 import json
 import os
+import sys
 
 
 # ============================= INITIALIZATION ==================================== #
@@ -74,7 +76,7 @@ def update_record(rec, claim, min_levenshtein):
     # always remove the orcidid
     modified = False
     orcidid = claim['orcidid']
-    for v in claims.values():
+    for v in list(claims.values()):
         while orcidid in v:
             v[v.index(orcidid)] = '-'
             modified = True
@@ -148,7 +150,10 @@ def find_orcid_position(authors_list, name_variants,
                 res.append((Levenshtein.ratio(author, variant), aidx, vidx))
                 # check transliterated/ascii form of names in author list if name is different from ascii version
                 if u2asc(author) != author:
-                    res_asc.append((Levenshtein.ratio(u2asc(author), variant), aidx, vidx))
+                    if sys.version_info > (3,):
+                        res_asc.append((Levenshtein.ratio(u2asc(author).encode(), variant), aidx, vidx))
+                    else:
+                        res_asc.append((Levenshtein.ratio(u2asc(author), variant), aidx, vidx))
                 else:
                     res_asc.append(res[-1])
                 aidx += 1
@@ -170,16 +175,28 @@ def find_orcid_position(authors_list, name_variants,
         author_name = al[res[0][1]]
         variant_name = nv[res[0][2]]
         if author_name in variant_name or variant_name in author_name:
-            logger.debug(u'Using submatch for: %s (required:%s) closest: %s, variant: %s' \
-                        % (res[0], min_levenshtein,
-                           unicode(author_name, 'utf-8'),
-                           unicode(variant_name, 'utf-8')))
+            if sys.version_info < (3,):
+                logger.debug(u'Using submatch for: %s (required:%s) closest: %s, variant: %s' \
+                             % (res[0], min_levenshtein,
+                                unicode(author_name, 'utf-8'),
+                                unicode(variant_name, 'utf-8')))
+            else:
+                logger.debug('Using submatch for: %s (required:%s) closest: %s, variant: %s' \
+                             % (res[0], min_levenshtein,
+                                author_name,
+                                variant_name))
             return res[0][1]
 
-        logger.debug(u'No match found: the closest is: %s (required:%s) closest: %s, variant: %s' \
-                        % (res[0], min_levenshtein,
-                           unicode(author_name, 'utf-8'),
-                           unicode(variant_name, 'utf-8')))
+        if sys.version_info < (3,):
+            logger.debug(u'No match found: the closest is: %s (required:%s) closest: %s, variant: %s' \
+                            % (res[0], min_levenshtein,
+                               unicode(author_name, 'utf-8'),
+                               unicode(variant_name, 'utf-8')))
+        else:
+            logger.debug('No match found: the closest is: %s (required:%s) closest: %s, variant: %s' \
+                         % (res[0], min_levenshtein,
+                            author_name,
+                            variant_name))
         return -1
 
     logger.debug('Found match: %s (min_levenstein=%s), authors=%s', authors_list[res[0][1]], min_levenshtein, authors_list)
@@ -193,7 +210,7 @@ def _remove_orcid(rec, orcidid):
     """
     modified = False
     claims = rec.get('claims', {})
-    for data in claims.values():
+    for data in list(claims.values()):
         if orcidid in data:
             data[data.index(orcidid)] = '-'
             modified = True
@@ -245,7 +262,7 @@ def reindex_all_claims(app, orcidid, since=None, ignore_errors=False):
                         r.claims = json.dumps(rec.get('claims', {}))
                         r.updated = get_date()
                         recs_modified.add(bibcode)
-                except Exception, e:
+                except Exception as e:
                     if ignore_errors:
                         app.logger.error(u'Error processing {0} {1}'.format(bibcode, orcidid))
                     else:

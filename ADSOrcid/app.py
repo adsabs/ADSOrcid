@@ -1,5 +1,7 @@
 
 
+from builtins import str
+from past.builtins import basestring
 from .models import ClaimsLog, Records, AuthorInfo, ChangeLog
 from adsputils import get_date, ADSCelery, u2asc
 from ADSOrcid import names
@@ -157,7 +159,7 @@ class ADSOrcidCelery(ADSCelery):
                         session.add(rec)
                         if collector is not None:
                             collector.append(rec.toJSON())
-                    except Exception, e:
+                    except Exception as e:
                         self.logger.error('Error importing line %s (%s) - %s' % (i, l, e))
                     if i % 1000 == 0:
                         session.commit()
@@ -325,7 +327,7 @@ class ADSOrcidCelery(ADSCelery):
                                 author_list = metadata.get('author', [])
                                 self.logger.info('Match found {0} -> {1}'.format(fvalue, bibc))
                                 break
-                        except Exception, e:
+                        except Exception as e:
                             self.logger.warning('Exception while searching for matching bibcode for: {}'.format(fvalue))
                             self.logger.warning(e.message)
 
@@ -352,12 +354,12 @@ class ADSOrcidCelery(ADSCelery):
                                                 format(r.text, fvalues, orcidid))
                         self.logger.warning('Found no bibcode for: {orcidid}, IDs: {ids}'.format(ids=json.dumps(fvalues), orcidid=orcidid))
 
-                except KeyError, e:
+                except KeyError as e:
                     self.logger.warning('Error processing a record: '
                         '{0} ({1})'.format(w,
                                            traceback.format_exc()))
                     continue
-                except TypeError, e:
+                except TypeError as e:
                     self.logger.warning('Error processing a record: '
                         '{0} ({1})'.format(w,
                                            traceback.format_exc()))
@@ -447,7 +449,7 @@ class ADSOrcidCelery(ADSCelery):
         with self.session_scope() as session:
             old_facts = info['facts']
             attrs = set(new_facts.keys())
-            attrs = attrs.union(old_facts.keys())
+            attrs = attrs.union(list(old_facts.keys()))
             is_dirty = False
 
             for attname in attrs:
@@ -553,11 +555,11 @@ class ADSOrcidCelery(ADSCelery):
         # go through the documents and collect all the names that correspond to the ORCID
         master_set = {}
         for doc in r.json()['response']['docs']:
-            for k,v in names.extract_names(orcidid, doc).items():
+            for k,v in list(names.extract_names(orcidid, doc).items()):
                 if v:
                     master_set.setdefault(k, {})
                     n = names.cleanup_name(v)
-                    if not master_set[k].has_key(n):
+                    if n not in master_set[k]:
                         master_set[k][n] = 0
                     master_set[k][n] += 1
 
@@ -586,10 +588,11 @@ class ADSOrcidCelery(ADSCelery):
         # because the matcher will be checking all name variants during
         # record update)
         mx = 0
-        for k,v in master_set.items():
+        for k,v in list(master_set.items()):
             author_data[k] = sorted(list(v.keys()))
-            for name, freq in v.items():
+            for name, freq in list(v.items()):
                 if freq > mx:
+                    mx = freq
                     author_data['name'] = name
 
         # automatically add the short names, because they make us find
