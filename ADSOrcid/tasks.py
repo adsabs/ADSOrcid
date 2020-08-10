@@ -139,7 +139,7 @@ def task_index_orcid_profile(message):
                 claim['bibcode_verified'] = True
                 claim['name'] = author['name']
                 if author.get('facts', None):
-                    for k, v in author['facts'].iteritems():
+                    for k, v in author['facts'].items():
                         claim[k] = v
 
                 claim['author_status'] = author['status']

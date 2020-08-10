@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from builtins import str
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP
 from sqlalchemy.types import Enum
 import json
+import sys
 from adsputils import get_date, UTCDateTime
 
 Base = declarative_base()
@@ -43,9 +45,13 @@ class ClaimsLog(Base):
     created = Column(UTCDateTime, default=get_date)
     
     def toJSON(self):
+        if sys.version_info > (3,):
+            out_prov = str(self.provenance)
+        else:
+            out_prov = unicode(self.provenance)
         return {'id': self.id, 'orcidid': self.orcidid,
                 'bibcode': self.bibcode, 'status': self.status,
-                'provenance': unicode(self.provenance), 'created': self.created and get_date(self.created).isoformat() or None
+                'provenance': out_prov, 'created': self.created and get_date(self.created).isoformat() or None
                 }
     
     

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from ADSOrcid.models import ClaimsLog
 from ADSOrcid import tasks
 from collections import defaultdict
@@ -17,11 +18,11 @@ def run():
                     authors[r.orcidid] = {'claimed': 0, 'forced': 0, '#full-import': 0, 'updated': 0, 'removed': 0, 'unchanged': 0}
                 authors[r.orcidid][r.status] += 1
             if i % 100000 == 0:
-                print 'read ', i, 'rows'
+                print('read ', i, 'rows')
             i += 1
     
-    print 'read', i, 'rows'
-    print stats
-    print authors
+    print('read', i, 'rows')
+    print(stats)
+    print(authors)
 if __name__ == '__main__':
     run()

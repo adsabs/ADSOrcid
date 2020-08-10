@@ -102,7 +102,7 @@ class TestReport(unittest.TestCase):
                                   status='removed')
             ])
 
-        self.assertEquals(len(r), 3)
+        self.assertEqual(len(r), 3)
         self.assertTrue(len(self.app._session.query(ClaimsLog)
                             .filter_by(bibcode='2018Test..001..123D').all()) == 1)
 
