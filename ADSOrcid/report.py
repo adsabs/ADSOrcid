@@ -170,7 +170,8 @@ def claimed_records(debug=False,test=False):
                 bibcode_other.add(results[i].get('bibcode'))
 
         if debug:
-            logger.info('Number of results processed so far: {}'.format(start+rows))
+            if (start + rows) % 10000 == 0:
+                logger.info('Number of results processed so far: {}'.format(start+rows))
 
         if test:
             break
@@ -249,7 +250,8 @@ def num_refused_claims(n_days=7,test=False):
     else:
         logger = setup_logging('reporting')
 
-    query = '"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@message:\\"Claim refused\\""'
+    query = '"+@log_group:\\"backoffice-logs\\" "+@log_group:\\"fluent-bit-backoffice_prod_orcid_pipeline_1\\" +@message:\\"Claim refused\\""'
+
 
     # don't need the full set of results as the total is passed separately
     resp = query_Kibana(query=query,n_days=n_days,rows=5)
@@ -271,7 +273,7 @@ def num_missing_profile(n_days=7,test=False):
     else:
         logger = setup_logging('reporting')
 
-    query = '"+@log_group:\\"backoffice-orcid_pipeline-daemon\\" +@message:\\"Missing profile for\\""'
+    query = '"+@log_group:\\"backoffice-logs\\" "+@log_group:\\"fluent-bit-backoffice_prod_orcid_pipeline_1\\" +@message:\\"Missing profile for\\""'
 
     resp = query_Kibana(query=query, n_days=n_days, rows=5)
 
