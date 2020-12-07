@@ -149,7 +149,13 @@ class TestAdsOrcidCelery(unittest.TestCase):
         """
         app = self.app
         orcidid = '0000-0003-2686-9241'
-        
+
+        internal_author_data = open(os.path.join(self.app.conf['TEST_DIR'], 'stub_data', orcidid + '.ads.json')).read()
+        # ensure a blank name variation doesn't break things
+        ia = json.loads(internal_author_data)
+        ia['info']['nameVariations'].append('')
+        internal_author = json.dumps(ia)
+
         httpretty.register_uri(
             httpretty.GET, self.app.conf['API_ORCID_PROFILE_ENDPOINT'] % orcidid,
             content_type='application/json',
@@ -157,7 +163,7 @@ class TestAdsOrcidCelery(unittest.TestCase):
         httpretty.register_uri(
             httpretty.GET, self.app.conf['API_ORCID_EXPORT_PROFILE'] % orcidid,
             content_type='application/json',
-            body=open(os.path.join(self.app.conf['TEST_DIR'], 'stub_data', orcidid + '.ads.json')).read())
+            body=internal_author)
         httpretty.register_uri(
             httpretty.GET, self.app.conf['API_SOLR_QUERY_ENDPOINT'],
             content_type='application/json',
@@ -311,11 +317,17 @@ class TestAdsOrcidCelery(unittest.TestCase):
             self.assertTrue(r.processed)
             
             
-
+    @httpretty.activate
     def test_get_claims(self):
         """Check the correct logic for discovering difference in the orcid profile."""
         
         orcidid = '0000-0003-3041-2092'
+        httpretty.register_uri(
+            httpretty.POST, self.app.conf['API_ORCID_UPDATE_BIB_STATUS'] % orcidid,
+            content_type='application/json',
+            status=200,
+            body=json.dumps({'2020..............A': 'verified'}))
+
         def side_effect(x, search_identifiers=False):
             if len(x) == 19:
                 return {'bibcode': x}

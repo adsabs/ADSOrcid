@@ -15,7 +15,11 @@ Tools for enhancing our knowledge about orcid ids (authors).
     
 
 def build_short_forms(orig_name):
-    orig_name = cleanup_name(orig_name)
+    try:
+        orig_name = cleanup_name(orig_name)
+    except RuntimeError:
+        # don't accept blank names
+        return []
     if ',' not in orig_name:
         return [] # refuse to do anything
     surname, other_names = orig_name.split(',', 1)
@@ -71,7 +75,7 @@ def cleanup_name(name):
     always returns a unicode
     """
     if not name:
-        return u''
+        raise RuntimeError('Name cannot be blank')
     if sys.version_info > (3,):
         test_type = str
     else:
