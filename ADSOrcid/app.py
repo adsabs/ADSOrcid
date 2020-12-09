@@ -486,7 +486,10 @@ class ADSOrcidCelery(ADSCelery):
 
         :return: AuthorInfo object
         """
-        name = names.cleanup_name(name)
+        try:
+            name = names.cleanup_name(name)
+        except RuntimeError:
+            name = None
 
         # retrieve profile from our own orcid microservice
         if not name or not facts:
@@ -558,7 +561,11 @@ class ADSOrcidCelery(ADSCelery):
             for k,v in list(names.extract_names(orcidid, doc).items()):
                 if v:
                     master_set.setdefault(k, {})
-                    n = names.cleanup_name(v)
+                    try:
+                        n = names.cleanup_name(v)
+                    except RuntimeError:
+                        # don't add a blank name to the set
+                        continue
                     if n not in master_set[k]:
                         master_set[k][n] = 0
                     master_set[k][n] += 1
@@ -578,7 +585,11 @@ class ADSOrcidCelery(ADSCelery):
             if _vars:
                 master_set.setdefault('author', {})
                 for x in _vars:
-                    x = names.cleanup_name(x)
+                    try:
+                        x = names.cleanup_name(x)
+                    except RuntimeError:
+                        # don't add a blank name to the set
+                        continue
                     v = master_set['author'].get(x, 1)
                     master_set['author'][x] = v
 

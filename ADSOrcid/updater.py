@@ -88,11 +88,19 @@ def update_record(rec, claim, min_levenshtein):
     for key in variant_keys:
         for variant in claim.get(key, []):
             if bool(variant.strip()):
-                claims_clean.add(names.cleanup_name(variant).lower().encode('utf-8'))
+                try:
+                    claims_clean.add(names.cleanup_name(variant).lower().encode('utf-8'))
+                except RuntimeError:
+                    # don't add a blank variant to the set
+                    continue
 
     aidx = 0
     for author in rec['authors']:
-        author_clean = names.cleanup_name(author).lower().encode('utf8')
+        try:
+            author_clean = names.cleanup_name(author).lower().encode('utf8')
+        except RuntimeError:
+            # don't add a blank name to the set
+            continue
         if author_clean in claims_clean:
             claims[fld_name][aidx] = claim.get('status', 'created') == 'removed' and '-' or orcidid
             return (fld_name, aidx)
@@ -134,16 +142,25 @@ def find_orcid_position(authors_list, name_variants,
 
     :return list of positions that match
     """
-    al = [names.cleanup_name(x).lower().encode('utf8') for x in authors_list]
-    nv = [names.cleanup_name(x).lower().encode('utf8') for x in name_variants]
-
+    try:
+        al = [names.cleanup_name(x).lower().encode('utf8') for x in authors_list]
+    except RuntimeError:
+        logger.error('Blank author present in author list: %s' % authors_list)
+        return -1
     # compute similarity between all authors (and the supplied variants)
     # this is not very efficient, however the lists should be small
     # and short, so 3000 operations take less than 1s)
     res = []
     res_asc = []
     aidx = vidx = 0
-    for variant in nv:
+    nv = []
+    for name in name_variants:
+        try:
+            variant = names.cleanup_name(name).lower().encode('utf8')
+            nv.append(variant)
+        except RuntimeError:
+            # don't accept a blank name
+            continue
         if bool(variant.strip()):
             aidx = 0
             for author in al:
