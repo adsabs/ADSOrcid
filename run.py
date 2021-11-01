@@ -14,6 +14,7 @@ __license__ = 'MIT'
 import os
 import sys
 import time
+import json
 import argparse
 import logging
 import traceback
@@ -233,6 +234,71 @@ def refetch_orcidids(since=None, orcid_ids=None, **kwargs):
     print 'Done'
     logger.info('Done submitting {0} orcid ids.'.format(len(orcidids)))
 
+
+def reprocess_bibcodes(bibcodes):
+    """
+    Checks that the stored length of the claims matches the length of the authors.
+    Reprocesses the relevant ORCID IDs if the lengths do not match.
+
+    :param bibcode: Bibcodes to check (list)
+    :return: no return
+    """
+
+    orcids_to_process = set()
+    logging.captureWarnings(True)
+
+    if type(bibcodes) != list:
+        if type(bibcodes) == str:
+            bibcodes = [bibcodes]
+        else:
+            raise TypeError('Bibcodes must be list or string')
+
+    for bibcode in bibcodes:
+        logger.debug('Reprocessing bibcode {}'.format(bibcode))
+        update = False
+
+        metadata = app.retrieve_metadata(bibcode, search_identifiers=True)
+        # make sure we're using the canonical bibcode
+        bibc = metadata.get('bibcode')
+        author_list = metadata.get('author', [])
+
+        # fetch existing record; creates one if necessary
+        rec = app.retrieve_record(bibc, author_list)
+        claims = rec.get('claims', {})
+        # reprocess any ORCID IDs that are in arrays of the wrong length
+        fld_names = ['verified', 'unverified']
+        for f in fld_names:
+            f_claims = claims.get(f, [])
+            if f_claims and len(author_list) != f_claims:
+                logger.debug('{0} claims length does not match author length for bibcode {1}, reprocessing'.
+                             format(f, bibcode))
+                orcids = set(f_claims)
+                orcids -= {'-'}
+                orcids_to_process = orcids_to_process.union(orcids)
+                if not orcids:
+                    # length is non-zero but wrong but there are no ORCIDs in it to reprocess, so rebuild manually
+                    claims[f] = ['-'] * len(author_list)
+                    update = True
+
+        if update:
+            with app.session_scope() as session:
+                r = session.query(Records).filter_by(bibcode=bibc).first()
+                r.claims = json.dumps(claims)
+                r.updated = get_date()
+
+                session.commit()
+
+    for orcidid in orcids_to_process:
+        try:
+            tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': True})
+        except: # potential backpressure (we are too fast)
+            time.sleep(2)
+            logger.info('Connection problem when trying to process {}, retrying...'.format(orcidid))
+            tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': True})
+
+    logger.info('Done processing the given bibcodes')
+
+
 def print_kvs():
     """Prints the values stored in the KeyValue table."""
     print 'Key, Value from the storage:'
@@ -314,6 +380,12 @@ if __name__ == '__main__':
                         action='store_true',
                         help='Gets all orcidids changed since X (as discovered from ads api) and sends them to the queue.')
 
+    parser.add_argument('-e',
+                        '--reprocess_bibcodes',
+                        dest='reprocess_bibcodes',
+                        action='store_true',
+                        help='Reprocesses all claims for the given bibcodes, confirms claim array lengths')
+
     parser.add_argument('-s',
                         '--since',
                         dest='since_date',
@@ -368,3 +440,5 @@ if __name__ == '__main__':
         repush_claims(args.since_date, args.orcid_ids)
     elif args.refetch_orcidids:
         refetch_orcidids(args.since_date, args.orcid_ids)
+    elif args.reprocess_bibcodes:
+        reprocess_bibcodes(args.bibcodes)
