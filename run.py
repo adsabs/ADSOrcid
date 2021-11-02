@@ -23,6 +23,7 @@ from requests.packages.urllib3 import exceptions
 warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)
 
 from adsputils import get_date
+from adsmsg import OrcidClaims
 from ADSOrcid import updater, tasks
 from ADSOrcid.models import ClaimsLog, KeyValue, Records, AuthorInfo
 
@@ -287,6 +288,13 @@ def reprocess_bibcodes(bibcodes):
                 r.updated = get_date()
 
                 session.commit()
+
+            # if there are no claims, we need to push the update to master manually
+            msg = OrcidClaims(authors=rec.get('authors'), bibcode=rec['bibcode'],
+                              verified=claims.get('verified', []),
+                              unverified=claims.get('unverified', [])
+                              )
+            tasks.task_output_results.delay(msg)
 
     for orcidid in orcids_to_process:
         try:
