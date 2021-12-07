@@ -236,12 +236,13 @@ def refetch_orcidids(since=None, orcid_ids=None, **kwargs):
     logger.info('Done submitting {0} orcid ids.'.format(len(orcidids)))
 
 
-def reprocess_bibcodes(bibcodes):
+def reprocess_bibcodes(bibcodes, force=False):
     """
     Checks that the stored length of the claims matches the length of the authors.
     Reprocesses the relevant ORCID IDs if the lengths do not match.
 
-    :param bibcode: Bibcodes to check (list)
+    :param bibcodes: Bibcodes to check (list)
+    :param force: Force the length of the ORCID array to be rebuilt (boolean)
     :return: no return
     """
 
@@ -276,8 +277,11 @@ def reprocess_bibcodes(bibcodes):
                 orcids = set(f_claims)
                 orcids -= {'-'}
                 orcids_to_process = orcids_to_process.union(orcids)
-                if not orcids:
-                    # length is non-zero but wrong but there are no ORCIDs in it to reprocess, so rebuild manually
+                if force or not orcids:
+                    # force is on or length is non-zero but wrong but there are no ORCIDs in it to reprocess,
+                    # so rebuild manually
+                    # note that this is fine to do even if there are valid orcid claims here because those will get
+                    # rebuilt in the reindex task at the end of this process
                     claims[f] = ['-'] * len(author_list)
                     update = True
 
@@ -394,6 +398,13 @@ if __name__ == '__main__':
                         action='store_true',
                         help='Reprocesses all claims for the given bibcodes, confirms claim array lengths')
 
+    parser.add_argument('-m',
+                        '--force',
+                        dest='force',
+                        action='store_true',
+                        default=False,
+                        help='Force rebuilding the length of the ORCID array when reprocessing a bibcode')
+
     parser.add_argument('-s',
                         '--since',
                         dest='since_date',
@@ -449,4 +460,4 @@ if __name__ == '__main__':
     elif args.refetch_orcidids:
         refetch_orcidids(args.since_date, args.orcid_ids)
     elif args.reprocess_bibcodes:
-        reprocess_bibcodes(args.bibcodes)
+        reprocess_bibcodes(args.bibcodes, args.force)
