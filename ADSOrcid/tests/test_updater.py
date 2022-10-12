@@ -192,6 +192,35 @@ class Test(unittest.TestCase):
         self.assertEqual(doc_blank['claims']['verified'],
                          ['-','-','-','-','-','0000-0009-8765-4321'])
 
+        # reject blacklisted claim
+        doc_blacklisted = {
+            'bibcode': '2022Test.........2B',
+            'authors': [
+                "Evans, D. F.",
+                "Southworth, J.",
+                "Smalley, B.",
+                "Jorgensen, U. G.",
+                "Dominik, M.",
+                "Tronsgaard, R."
+            ],
+            'claims': {'verified': ['0000-0009-8765-4321', '-', '-', '-', '-', '-']},
+            'status': {'blacklisted': ['0000-0001-2345-6789']}
+        }
+        r_blacklisted = updater.update_record(
+            doc_blacklisted,
+            {
+                'bibcode': '2022Test.........2B',
+                'orcidid': '0000-0001-2345-6789',
+                'account_id': '3',
+                'orcid_name': ['Southworth, X.'],
+                'author': [''],
+                'name': ''
+            },
+            0.75
+        )
+        self.assertIsNone(r_blacklisted)
+        self.assertEqual(doc_blacklisted['claims']['verified'], ['0000-0009-8765-4321', '-', '-', '-', '-', '-'])
+
     def test_exact_match(self):
         """
         Given an author with an exact name match, the Levenshtein matching function should not be called.
