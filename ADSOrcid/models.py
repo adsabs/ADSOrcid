@@ -64,13 +64,15 @@ class Records(Base):
     created = Column(UTCDateTime, default=get_date)
     updated = Column(UTCDateTime, default=get_date)
     processed = Column(UTCDateTime)
+    status = Column(String(255))
     
     def toJSON(self):
         return {'id': self.id, 'bibcode': self.bibcode,
                 'authors': self.authors and json.loads(self.authors) or [],
                 'claims': self.claims and json.loads(self.claims) or {},
                 'created': self.created and get_date(self.created).isoformat() or None, 'updated': self.updated and get_date(self.updated).isoformat() or None, 
-                'processed': self.processed and get_date(self.processed).isoformat() or None
+                'processed': self.processed and get_date(self.processed).isoformat() or None,
+                'status': self.status and json.loads(self.status) or {}
                 }
 
 

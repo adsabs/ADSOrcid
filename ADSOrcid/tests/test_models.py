@@ -45,7 +45,7 @@ class Test(unittest.TestCase):
         rec = Records(bibcode='foo', created='2009-09-03T20:56:35.450686Z')
 
         self.assertDictEqual(rec.toJSON(),
-             {'bibcode': 'foo', 'created': '2009-09-03T20:56:35.450686+00:00', 'updated': None, 'processed': None, 'claims': {}, 'id': None, 'authors': []})
+             {'bibcode': 'foo', 'created': '2009-09-03T20:56:35.450686+00:00', 'updated': None, 'processed': None, 'claims': {}, 'id': None, 'authors': [], 'status': {}})
         
         with self.assertRaisesRegexp(Exception, 'IntegrityError'):
             with app.session_scope() as session:
