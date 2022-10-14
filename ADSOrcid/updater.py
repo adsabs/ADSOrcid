@@ -59,14 +59,6 @@ def update_record(rec, claim, min_levenshtein):
     rec['claims'] = claims
     authors = rec.get('authors', [])
 
-    # check to see if claim (ORCID ID + bibcode) is blacklisted
-    if rec.get('status') \
-            and rec.get('status').get('blacklisted') \
-            and claim['orcidid'] in rec.get('status').get('blacklisted'):
-        logger.info('ORCID ID {0} is blacklisted from bibcode {1}. Claim will be rejected.'.
-                    format(claim['orcidid'], claim['bibcode']))
-        return None
-
     # make sure the claims have the necessary structure
     fld_name = u'unverified'
     if 'account_id' in claim and claim['account_id']: # the claim was made by ADS verified user
@@ -88,6 +80,15 @@ def update_record(rec, claim, min_levenshtein):
         while orcidid in v:
             v[v.index(orcidid)] = '-'
             modified = True
+
+    # check to see if claim (ORCID ID + bibcode) is blacklisted
+    if rec.get('status') \
+            and rec.get('status').get('blacklisted') \
+            and claim['orcidid'] in rec.get('status').get('blacklisted'):
+        if modified:
+            return ('removed', -1)
+        else:
+            return None
 
     variant_keys = ('author', 'orcid_name', 'author_norm', 'short_name', 'ascii_name')
 
