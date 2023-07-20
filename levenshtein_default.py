@@ -8,7 +8,7 @@ import os
 import matplotlib
 
 matplotlib.use("TkAgg")
-import matplotlib.pyplot as py
+from matplotlib import pyplot as py
 
 app = tasks.app
 logger = setup_logging("levenshtein_test")

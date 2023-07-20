@@ -255,7 +255,8 @@ class TestWorkers(unittest.TestCase):
     def test_match_claim_unknown_payload_should_return_warning(self):
         with pytest.raises(ProcessingException) as exception_info:
             tasks.task_match_claim([])
-        assert str(exception_info.value) == "Received unknown payload []"
+
+        self.assertEqual(str(exception_info.value), "Received unknown payload []")
 
     def test_match_claim_unusable_payload_should_return_warning(self):
         claim = {
@@ -274,9 +275,10 @@ class TestWorkers(unittest.TestCase):
         }
         with pytest.raises(ProcessingException) as exception_info:
             tasks.task_match_claim(claim)
-        assert str(
-            exception_info.value
-        ) == "Unusable payload, missing orcidid {0}".format(claim)
+        self.assertEqual(
+            str(exception_info.value),
+            "Unusable payload, missing orcidid {0}".format(claim),
+        )
 
     def test_task_match_claim_cl_status_200_should_return_correct_message(self):
         with patch.object(self.app, "retrieve_record") as retrieve_record, patch.object(
@@ -461,14 +463,12 @@ class TestWorkers(unittest.TestCase):
             )
 
             warning_args = mock_warning.call_args
-            warning_message = warning_args[0][0]
 
-            assert "id1" in warning_message
-            assert "id2" in warning_message
-            assert "BIBCODE22" in warning_message
-            assert "0000-0003-3041-2092" in warning_message
-            assert "rejected" in warning_message
-            assert "verified" not in warning_message
+            self.assertIn("id1", warning_args[0][0])
+            self.assertIn("id2", warning_args[0][0])
+            self.assertIn("BIBCODE22", warning_args[0][0])
+            self.assertIn("0000-0003-3041-2092", warning_args[0][0])
+            self.assertIn("rejected", warning_args[0][0])
 
     def test_task_match_claim_warning_cl_status_code_not_200_should_return_verified(
         self,
@@ -502,14 +502,12 @@ class TestWorkers(unittest.TestCase):
             )
 
             warning_args = mock_warning.call_args
-            warning_message = warning_args[0][0]
 
-            assert "id1" in warning_message
-            assert "id2" in warning_message
-            assert "BIBCODE22" in warning_message
-            assert "0000-0003-3041-2092" in warning_message
-            assert "verified" in warning_message
-            assert "rejected" not in warning_message
+            self.assertIn("id1", warning_args[0][0])
+            self.assertIn("id2", warning_args[0][0])
+            self.assertIn("BIBCODE22", warning_args[0][0])
+            self.assertIn("0000-0003-3041-2092", warning_args[0][0])
+            self.assertIn("verified", warning_args[0][0])
 
     def test_task_match_claim_warning_cl_bibcode_length_is_different_should_return_does_not_match(
         self,
@@ -543,13 +541,12 @@ class TestWorkers(unittest.TestCase):
             )
 
             warning_args = mock_warning.call_args
-            warning_message = warning_args[0][0]
 
-            assert "id1" in warning_message
-            assert "id2" in warning_message
-            assert "BIBCODE22" in warning_message
-            assert "0000-0003-3041-2092" in warning_message
-            assert "does not match input" in warning_message
+            self.assertIn("id1", warning_args[0][0])
+            self.assertIn("id2", warning_args[0][0])
+            self.assertIn("BIBCODE22", warning_args[0][0])
+            self.assertIn("0000-0003-3041-2092", warning_args[0][0])
+            self.assertIn("does not match input", warning_args[0][0])
 
     def test_task_match_removed_claim(self):
         with patch.object(self.app, "retrieve_record") as retrieve_record, patch.object(

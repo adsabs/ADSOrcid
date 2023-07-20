@@ -221,12 +221,7 @@ def task_match_claim(claim, **kwargs):
 
     cl = updater.update_record(rec, claim, app.conf.get("MIN_LEVENSHTEIN_RATIO", 0.9))
     unique_bibs = list(set([bibcode] + identifiers))
-    status = "verified" if cl else "rejected"
-    r = app.client.post(
-        app.conf.get("API_ORCID_UPDATE_BIB_STATUS") % claim.get("orcidid"),
-        json={"bibcodes": unique_bibs, "status": status},
-        headers={"Authorization": "Bearer {0}".format(app.conf.get("API_TOKEN"))},
-    )
+    status = "verified"
 
     if cl:
         app.record_claims(bibcode, rec["claims"], rec["authors"])
@@ -238,12 +233,18 @@ def task_match_claim(claim, **kwargs):
         )
         task_output_results.delay(msg)
     else:
+        status = "rejected"
         logger.warning(
             "Claim refused for bibcode:{0} and orcidid:{1}".format(
                 claim["bibcode"], claim["orcidid"]
             )
         )
 
+    r = app.client.post(
+        app.conf.get("API_ORCID_UPDATE_BIB_STATUS") % claim.get("orcidid"),
+        json={"bibcodes": unique_bibs, "status": status},
+        headers={"Authorization": "Bearer {0}".format(app.conf.get("API_TOKEN"))},
+    )
     if r.status_code != 200:
         logger.warning(
             "IDs {ids} for {orcidid} not updated to: {status}".format(
