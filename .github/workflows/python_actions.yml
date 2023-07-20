@@ -18,11 +18,14 @@ jobs:
         python -m pip install --upgrade wheel setuptools pip
         pip install -U -r requirements.txt
         pip install -U -r dev-requirements.txt
+    
+    - name: Prepare Matplotlib
+      run: |
+        mkdir -p $HOME/.config/matplotlib
+        cp matplotlibrc $HOME/.config/matplotlib/matplotlibrc
         
     - name: Test with pytest
       run: |
-        cp matplotlibrc $HOME/.config/matplotlib/matplotlibrc
-
         py.test
       env:
         DISPLAY: :99
