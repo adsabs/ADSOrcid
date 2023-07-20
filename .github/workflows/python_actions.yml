@@ -12,20 +12,22 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    
+
+    - name: Install Xvfb
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+  
     - name: Install dependencies
       run: |
         python -m pip install --upgrade wheel setuptools pip
         pip install -U -r requirements.txt
         pip install -U -r dev-requirements.txt
     
-    - name: Prepare Matplotlib
-      run: |
-        mkdir -p $HOME/.config/matplotlib
-        cp matplotlibrc $HOME/.config/matplotlib/matplotlibrc
-        
     - name: Test with pytest
       run: |
+        Xvfb :99 -ac -screen 0 1024x768x8 &
+        export DISPLAY=:99
         py.test
       env:
         DISPLAY: :99
