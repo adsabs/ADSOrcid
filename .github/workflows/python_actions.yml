@@ -12,16 +12,6 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.8
-
-    - name: Install Xvfb 
-      run: | 
-        sudo apt-get update 
-        sudo apt-get install -y xvfb 
-    
-    - name: Start Xvfb
-      run: Xvfb :99 -ac -screen 0 1024x768x8 &
-      env:
-        DISPLAY: :99
     
     - name: Install dependencies
       run: |
@@ -31,7 +21,11 @@ jobs:
         
     - name: Test with pytest
       run: |
+        cp matplotlibrc $HOME/.config/matplotlib/matplotlibrc
+
         py.test
+      env:
+        DISPLAY: :99
         
     - uses: actions/upload-artifact@v2
       with:
