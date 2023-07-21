@@ -1,3 +1,8 @@
+import matplotlib
+
+matplotlib.use("Agg")
+from matplotlib import pyplot as py
+
 from ADSOrcid.models import AuthorInfo
 from ADSOrcid import tasks
 from adsputils import load_config, setup_logging
@@ -5,10 +10,7 @@ import numpy as np
 import Levenshtein
 import sys
 import os
-import matplotlib
 
-matplotlib.use("TkAgg")
-from matplotlib import pyplot as py
 
 app = tasks.app
 logger = setup_logging("levenshtein_test")
