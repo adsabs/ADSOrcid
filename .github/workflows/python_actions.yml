@@ -21,7 +21,7 @@ jobs:
         
     - name: Test with pytest
       run: |
-        py.test -vv
+        py.test -vv -s
         
     - uses: actions/upload-artifact@v2
       with:

@@ -8,6 +8,16 @@ import adsputils as utils
 from ADSOrcid import app, tasks
 from ADSOrcid.models import Base
 from ADSOrcid.exceptions import ProcessingException
+from adsputils import setup_logging, load_config
+
+proj_home = os.path.realpath(os.path.join(os.path.dirname(__file__), "../"))
+config = load_config(proj_home=proj_home)
+logger = setup_logging(
+    __name__,
+    proj_home=proj_home,
+    level=config.get("LOGGING_LEVEL", "INFO"),
+    attach_stdout=config.get("LOG_STDOUT", False),
+)
 
 
 class TestWorkers(unittest.TestCase):
@@ -19,6 +29,7 @@ class TestWorkers(unittest.TestCase):
             "test",
             local_config={"SQLALCHEMY_URL": "sqlite:///", "SQLALCHEMY_ECHO": False},
         )
+
         tasks.app = self.app  # monkey-path the app object
 
         Base.metadata.bind = self.app._session.get_bind()
@@ -392,43 +403,45 @@ class TestWorkers(unittest.TestCase):
             record_claims.assert_not_called()
             next_task.assert_not_called()
 
-    # def test_logger_warning_task_match_claim_no_cl_should_be_refused(self):
-    #     with patch("logging.Logger.warning") as mock_warning, patch(
-    #         "ADSOrcid.updater.update_record"
-    #     ) as mock_update, patch.object(tasks.app.client, "post") as post:
-    #         # Call the function here
+    def test_logger_warning_task_match_claim_no_cl_should_be_refused(self):
+        logger.warn(
+            "Starting test_logger_warning_task_match_claim_no_cl_should_be_refused test"
+        )
+        with patch("logging.Logger.warning") as mock_warning, patch(
+            "ADSOrcid.updater.update_record"
+        ) as mock_update, patch.object(tasks.app.client, "post") as post:
+            mock_update.return_value = None
+            logger.warn("Setting up r")
+            r = PropertyMock()
+            data = {"BIBCODE22": "status"}
+            r.text = str(data)
+            r.json = lambda: data
+            r.status_code = 200
+            post.return_value = r
 
-    #         mock_update.return_value = None
-
-    #         r = PropertyMock()
-    #         data = {"BIBCODE22": "status"}
-    #         r.text = str(data)
-    #         r.json = lambda: data
-    #         r.status_code = 200
-    #         post.return_value = r
-
-    #         tasks.task_match_claim(
-    #             claim={
-    #                 "status": "claimed",
-    #                 "bibcode": "BIBCODE22",
-    #                 "name": "Stern, D K",
-    #                 "provenance": "provenance",
-    #                 "identifiers": ["id1", "id2"],
-    #                 "orcid_name": ["Stern, Daniel"],
-    #                 "author_norm": ["Stern, D"],
-    #                 "author_status": None,
-    #                 "orcidid": "0000-0003-3041-2092",
-    #                 "author": ["Stern, D", "Stern, D K", "Stern, Daniel"],
-    #                 "author_id": 1,
-    #                 "account_id": None,
-    #                 "author_list": ["Stern, D K", "author two"],
-    #             }
-    #         )
-
-    #         # Assert that logger.warning was called with the correct message
-    #         mock_warning.assert_called_with(
-    #             "Claim refused for bibcode:BIBCODE22 and orcidid:0000-0003-3041-2092"
-    #         )
+            logger.warn("Calling task_match_claim")
+            tasks.task_match_claim(
+                claim={
+                    "status": "claimed",
+                    "bibcode": "BIBCODE22",
+                    "name": "Stern, D K",
+                    "provenance": "provenance",
+                    "identifiers": ["id1", "id2"],
+                    "orcid_name": ["Stern, Daniel"],
+                    "author_norm": ["Stern, D"],
+                    "author_status": None,
+                    "orcidid": "0000-0003-3041-2092",
+                    "author": ["Stern, D", "Stern, D K", "Stern, Daniel"],
+                    "author_id": 1,
+                    "account_id": None,
+                    "author_list": ["Stern, D K", "author two"],
+                }
+            )
+            logger.warn("Running assert")
+            # Assert that logger.warning was called with the correct message
+            mock_warning.assert_called_with(
+                "Claim refused for bibcode:BIBCODE22 and orcidid:0000-0003-3041-2092"
+            )
 
     # def test_task_match_claim_warning_no_cl_status_code_not_200_should_return_rejected(
     #     self,
