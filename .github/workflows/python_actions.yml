@@ -18,10 +18,9 @@ jobs:
         python -m pip install --upgrade wheel setuptools pip
         pip install -U -r requirements.txt
         pip install -U -r dev-requirements.txt
-    
-    - name: Test with pytest (Set MPLBACKEND to 'Agg' for testing)
+        
+    - name: Test with pytest
       run: |
-        python -c "import matplotlib; matplotlib.use('Agg')"
         py.test
         
     - uses: actions/upload-artifact@v2
