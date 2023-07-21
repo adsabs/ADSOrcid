@@ -509,44 +509,44 @@ class TestWorkers(unittest.TestCase):
             self.assertIn("0000-0003-3041-2092", warning_args[0][0])
             self.assertIn("verified", warning_args[0][0])
 
-    # def test_task_match_claim_warning_cl_bibcode_length_is_different_should_return_does_not_match(
-    #     self,
-    # ):
-    #     with patch("logging.Logger.warning") as mock_warning, patch.object(
-    #         tasks.app.client, "post"
-    #     ) as post:
-    #         r = PropertyMock()
-    #         data = {"BIBCODE22": "status"}
-    #         r.text = str(data)
-    #         r.json.return_value = {}
-    #         r.status_code = 200
-    #         post.return_value = r
+    def test_task_match_claim_warning_cl_bibcode_length_is_different_should_return_does_not_match(
+        self,
+    ):
+        with patch("logging.Logger.warning") as mock_warning, patch.object(
+            tasks.app.client, "post"
+        ) as post:
+            r = PropertyMock()
+            data = {"BIBCODE22": "status"}
+            r.text = str(data)
+            r.json.return_value = {}
+            r.status_code = 200
+            post.return_value = r
 
-    #         tasks.task_match_claim(
-    #             claim={
-    #                 "status": "claimed",
-    #                 "bibcode": "BIBCODE22",
-    #                 "name": "Stern, D K",
-    #                 "provenance": "provenance",
-    #                 "identifiers": ["id1", "id2"],
-    #                 "orcid_name": ["Stern, Daniel"],
-    #                 "author_norm": ["Stern, D"],
-    #                 "author_status": None,
-    #                 "orcidid": "0000-0003-3041-2092",
-    #                 "author": ["Stern, D", "Stern, D K", "Stern, Daniel"],
-    #                 "author_id": 1,
-    #                 "account_id": None,
-    #                 "author_list": ["Stern, D K", "author two"],
-    #             }
-    #         )
+            tasks.task_match_claim(
+                claim={
+                    "status": "claimed",
+                    "bibcode": "BIBCODE22",
+                    "name": "Stern, D K",
+                    "provenance": "provenance",
+                    "identifiers": ["id1", "id2"],
+                    "orcid_name": ["Stern, Daniel"],
+                    "author_norm": ["Stern, D"],
+                    "author_status": None,
+                    "orcidid": "0000-0003-3041-2092",
+                    "author": ["Stern, D", "Stern, D K", "Stern, Daniel"],
+                    "author_id": 1,
+                    "account_id": None,
+                    "author_list": ["Stern, D K", "author two"],
+                }
+            )
 
-    #         warning_args = mock_warning.call_args
+            warning_args = mock_warning.call_args
 
-    #         self.assertIn("id1", warning_args[0][0])
-    #         self.assertIn("id2", warning_args[0][0])
-    #         self.assertIn("BIBCODE22", warning_args[0][0])
-    #         self.assertIn("0000-0003-3041-2092", warning_args[0][0])
-    #         self.assertIn("does not match input", warning_args[0][0])
+            self.assertIn("id1", warning_args[0][0])
+            self.assertIn("id2", warning_args[0][0])
+            self.assertIn("BIBCODE22", warning_args[0][0])
+            self.assertIn("0000-0003-3041-2092", warning_args[0][0])
+            self.assertIn("does not match input", warning_args[0][0])
 
     def test_task_match_removed_claim(self):
         with patch.object(self.app, "retrieve_record") as retrieve_record, patch.object(
