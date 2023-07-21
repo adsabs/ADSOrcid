@@ -404,14 +404,14 @@ class TestWorkers(unittest.TestCase):
             next_task.assert_not_called()
 
     def test_logger_warning_task_match_claim_no_cl_should_be_refused(self):
-        logger.warn(
+        logger.info(
             "Starting test_logger_warning_task_match_claim_no_cl_should_be_refused test"
         )
         with patch("logging.Logger.warning") as mock_warning, patch(
             "ADSOrcid.updater.update_record"
         ) as mock_update, patch.object(tasks.app.client, "post") as post:
             mock_update.return_value = None
-            logger.warn("Setting up r")
+            logger.info("Setting up r")
             r = PropertyMock()
             data = {"BIBCODE22": "status"}
             r.text = str(data)
@@ -419,7 +419,7 @@ class TestWorkers(unittest.TestCase):
             r.status_code = 200
             post.return_value = r
 
-            logger.warn("Calling task_match_claim")
+            logger.info("Calling task_match_claim")
             tasks.task_match_claim(
                 claim={
                     "status": "claimed",
@@ -437,7 +437,7 @@ class TestWorkers(unittest.TestCase):
                     "author_list": ["Stern, D K", "author two"],
                 }
             )
-            logger.warn("Running assert")
+            logger.info("Running assert")
             # Assert that logger.warning was called with the correct message
             mock_warning.assert_called_with(
                 "Claim refused for bibcode:BIBCODE22 and orcidid:0000-0003-3041-2092"
