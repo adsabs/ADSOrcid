@@ -427,7 +427,7 @@ class TestWorkers(unittest.TestCase):
                 "Claim refused for bibcode:BIBCODE22 and orcidid:0000-0003-3041-2092"
             )
 
-    def test_task_match_claim_warning_no_cl_status_code_not_200_should_return_rejected(
+    def test_task_match_claim_warning_no_cl_status_code_not_200_should_return_not_updated_to_rejected(
         self,
     ):
         with patch("logging.Logger.warning") as mock_warning, patch(
@@ -467,45 +467,57 @@ class TestWorkers(unittest.TestCase):
             self.assertIn("0000-0003-3041-2092", warning_args[0][0])
             self.assertIn("rejected", warning_args[0][0])
 
-    # def test_task_match_claim_warning_cl_status_code_not_200_should_return_verified(
-    #     self,
-    # ):
-    #     with patch("logging.Logger.warning") as mock_warning, patch.object(
-    #         tasks.app.client, "post"
-    #     ) as post:
-    #         r = PropertyMock()
-    #         data = {"BIBCODE22": "status"}
-    #         r.text = str(data)
-    #         r.json = lambda: data
-    #         r.status_code = 404
-    #         post.return_value = r
+    # This one breaks
+    def test_task_match_claim_warning_cl_status_code_not_200_should_return_not_updated_to_verified(
+        self,
+    ):
+        with patch("logging.Logger.warning") as mock_warning, patch(
+            "ADSOrcid.updater.update_record"
+        ) as mock_update, patch.object(
+            self.app, "record_claims"
+        ) as record_claims, patch.object(
+            tasks.app.client, "post"
+        ) as post, patch.object(
+            tasks.task_output_results, "delay"
+        ) as next_task:
+            r = PropertyMock()
+            data = {"BIBCODE22": "status"}
+            r.text = str(data)
+            r.json = lambda: data
+            r.status_code = 404
+            post.return_value = r
 
-    #         tasks.task_match_claim(
-    #             claim={
-    #                 "status": "claimed",
-    #                 "bibcode": "BIBCODE22",
-    #                 "name": "Stern, D K",
-    #                 "provenance": "provenance",
-    #                 "identifiers": ["id1", "id2"],
-    #                 "orcid_name": ["Stern, Daniel"],
-    #                 "author_norm": ["Stern, D"],
-    #                 "author_status": None,
-    #                 "orcidid": "0000-0003-3041-2092",
-    #                 "author": ["Stern, D", "Stern, D K", "Stern, Daniel"],
-    #                 "author_id": 1,
-    #                 "account_id": None,
-    #                 "author_list": ["Stern, D K", "author two"],
-    #             }
-    #         )
+            tasks.task_match_claim(
+                claim={
+                    "status": "claimed",
+                    "bibcode": "BIBCODE22",
+                    "name": "Stern, D K",
+                    "provenance": "provenance",
+                    "identifiers": ["id1", "id2"],
+                    "orcid_name": ["Stern, Daniel"],
+                    "author_norm": ["Stern, D"],
+                    "author_status": None,
+                    "orcidid": "0000-0003-3041-2092",
+                    "author": ["Stern, D", "Stern, D K", "Stern, Daniel"],
+                    "author_id": 1,
+                    "account_id": None,
+                    "author_list": ["Stern, D K", "author two"],
+                }
+            )
 
-    #         warning_args = mock_warning.call_args
+            warning_args = mock_warning.call_args
 
-    #         self.assertIn("id1", warning_args[0][0])
-    #         self.assertIn("id2", warning_args[0][0])
-    #         self.assertIn("BIBCODE22", warning_args[0][0])
-    #         self.assertIn("0000-0003-3041-2092", warning_args[0][0])
-    #         self.assertIn("verified", warning_args[0][0])
+            self.assertIn("id1", warning_args[0][0])
+            self.assertIn("id2", warning_args[0][0])
+            self.assertIn("BIBCODE22", warning_args[0][0])
+            self.assertIn("0000-0003-3041-2092", warning_args[0][0])
+            self.assertIn("not updated to", warning_args[0][0])
+            self.assertIn("verified", warning_args[0][0])
 
+            self.assertTrue(record_claims.called)
+            self.assertTrue(next_task.called)
+
+    # This one also breaks
     # def test_task_match_claim_warning_cl_bibcode_length_is_different_should_return_does_not_match(
     #     self,
     # ):
