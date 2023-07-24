@@ -13,11 +13,6 @@ jobs:
       with:
         python-version: 3.8
 
-    - name: Install Xvfb
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y xvfb
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade wheel setuptools pip
@@ -26,8 +21,6 @@ jobs:
         
     - name: Test with pytest
       run: |
-        Xvfb :99 -ac -screen 0 1024x768x8 &
-        export DISPLAY=:99
         py.test -vv -s
         
     - uses: actions/upload-artifact@v2
