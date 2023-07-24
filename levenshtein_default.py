@@ -6,7 +6,7 @@ import Levenshtein
 import sys
 import os
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('TkAgg')
 from matplotlib import pyplot as py
 
 app = tasks.app
