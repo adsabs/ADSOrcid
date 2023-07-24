@@ -154,4 +154,3 @@ class TestReport(unittest.TestCase):
                 if line == 1:
                     self.assertEqual(j['message'], u'Number of missing profile errors in the last 1 days: 5')
                 line += 1
-        
