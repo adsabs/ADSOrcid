@@ -221,9 +221,9 @@ def task_match_claim(claim, **kwargs):
 
     cl = updater.update_record(rec, claim, app.conf.get("MIN_LEVENSHTEIN_RATIO", 0.9))
     unique_bibs = list(set([bibcode] + identifiers))
-    status = "verified"
-
+    
     if cl:
+        status = "verified"
         app.record_claims(bibcode, rec["claims"], rec["authors"])
         msg = OrcidClaims(
             authors=rec.get("authors"),
