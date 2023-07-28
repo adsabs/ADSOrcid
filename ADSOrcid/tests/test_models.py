@@ -47,7 +47,7 @@ class Test(unittest.TestCase):
         self.assertDictEqual(rec.toJSON(),
              {'bibcode': 'foo', 'created': '2009-09-03T20:56:35.450686+00:00', 'updated': None, 'processed': None, 'claims': {}, 'id': None, 'authors': [], 'status': {}})
         
-        with self.assertRaisesRegexp(Exception, 'IntegrityError'):
+        with self.assertRaisesRegex(Exception, 'IntegrityError'):
             with app.session_scope() as session:
                 c = ClaimsLog(bibcode='foo', orcidid='bar', status='hey')
                 session.add(c)
@@ -58,7 +58,7 @@ class Test(unittest.TestCase):
                 session.add(AuthorInfo(orcidid='bar' + s, status=s))
                 session.commit()
         
-        with self.assertRaisesRegexp(Exception, 'IntegrityError'):
+        with self.assertRaisesRegex(Exception, 'IntegrityError'):
             with app.session_scope() as session:
                 c = AuthorInfo(orcidid='bar', status='hey')
                 session.add(c)

@@ -11,7 +11,12 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
-        python-version: 2.7
+        python-version: 3.8
+
+    - name: Install Xvfb
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
 
     - name: Install dependencies
       run: |
@@ -21,7 +26,9 @@ jobs:
         
     - name: Test with pytest
       run: |
-        py.test
+        Xvfb :99 -ac -screen 0 1024x768x8 &
+        export DISPLAY=:99
+        py.test -vv -s
         
     - uses: actions/upload-artifact@v2
       with:
