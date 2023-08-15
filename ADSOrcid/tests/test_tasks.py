@@ -171,71 +171,38 @@ class TestWorkers(unittest.TestCase):
             self.assertTrue(next_task.called)
             self.assertEqual(next_task.call_count, 4)
 
-            if sys.version_info > (3,):
-                self.assertEqual(
-                    sorted(
-                        [(x.bibcode, x.status) for x in insert_claims.call_args[0][0]]
-                    ),
-                    sorted(
-                        [
-                            ("", "#full-import"),
-                            ("Bibcode2", "claimed"),
-                            ("Bibcode3", "claimed"),
-                            ("Bibcode4", "removed"),
-                            ("Bibcode1", "unchanged"),
-                        ]
-                    ),
-                )
-            else:
-                self.assertEqual(
-                    sorted(
-                        [(x.bibcode, x.status) for x in insert_claims.call_args[0][0]]
-                    ),
-                    sorted(
-                        [
-                            ("", "#full-import"),
-                            ("Bibcode2", "claimed"),
-                            ("Bibcode3", "claimed"),
-                            ("Bibcode4", "removed"),
-                            ("Bibcode1", "unchanged"),
-                        ]
-                    ),
-                )
-            if sys.version_info > (3,):
-                self.assertEqual(
-                    sorted(
-                        [
-                            (x[0][0]["bibcode"], x[0][0]["status"])
-                            for x in next_task.call_args_list
-                        ]
-                    ),
-                    sorted(
-                        [
-                            ("Bibcode2", "claimed"),
-                            ("Bibcode3", "claimed"),
-                            ("Bibcode4", "removed"),
-                            ("Bibcode1", "unchanged"),
-                        ]
-                    ),
-                )
-            else:
-                self.assertEqual(
-                    sorted(
-                        [
-                            (x[0][0]["bibcode"], x[0][0]["status"])
-                            for x in next_task.call_args_list
-                        ]
-                    ),
-                    sorted(
-                        [
-                            ("Bibcode2", "claimed"),
-                            ("Bibcode3", "claimed"),
-                            ("Bibcode4", "removed"),
-                            ("Bibcode1", "unchanged"),
-                        ]
-                    ),
-                )
-
+            self.assertEqual(
+                sorted(
+                    [(x.bibcode, x.status) for x in insert_claims.call_args[0][0]]
+                ),
+                sorted(
+                    [
+                        ("", "#full-import"),
+                        ("Bibcode2", "claimed"),
+                        ("Bibcode3", "claimed"),
+                        ("Bibcode4", "removed"),
+                        ("Bibcode1", "unchanged"),
+                    ]
+                ),
+            )
+            
+            self.assertEqual(
+                sorted(
+                    [
+                        (x[0][0]["bibcode"], x[0][0]["status"])
+                        for x in next_task.call_args_list
+                    ]
+                ),
+                sorted(
+                    [
+                        ("Bibcode2", "claimed"),
+                        ("Bibcode3", "claimed"),
+                        ("Bibcode4", "removed"),
+                        ("Bibcode1", "unchanged"),
+                    ]
+                ),
+            )
+            
             self.assertEqual(
                 (
                     next_task.call_args_list[0][0][0]["bibcode"],
@@ -664,16 +631,11 @@ class TestWorkers(unittest.TestCase):
             self.assertEqual(
                 next_task.call_args_list[1][0][0]["orcidid"], "0000-0003-3041-2093"
             )
-            if sys.version_info > (3,):
-                self.assertEqual(
-                    str(recheck_task.call_args_list[0]),
-                    "call(args=({'errcount': 0},), countdown=300)",
-                )
-            else:
-                self.assertEqual(
-                    str(recheck_task.call_args_list[0]),
-                    "call(args=({u'errcount': 0},), countdown=300)",
-                )
+            self.assertEqual(
+                str(recheck_task.call_args_list[0]),
+                "call(args=({'errcount': 0},), countdown=300)",
+            )
+           
 
 
 if __name__ == "__main__":

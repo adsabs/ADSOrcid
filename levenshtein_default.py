@@ -81,17 +81,8 @@ def get_max_lev(orcid_field='orcid_user'):
                     rec_author = record['author'][idx[0][0]]
                     tmplev = []
                     for var in authors:
-                        # make sure the two comparison strings are the same type
-                        try:
-                            rec_author = unicode(rec_author,'utf-8')
-                        except TypeError:
-                            rec_author = rec_author
-                        try:
-                            var = unicode(var,'utf-8')
-                        except TypeError:
-                            var = var
                         # check the Levenshtein ratio for all variant names
-                        tmplev.append(Levenshtein.ratio(rec_author,var))
+                        tmplev.append(Levenshtein.ratio(str(rec_author),str(var)))
                     # keep only the best one for each record
                     lev_all.append(max(tmplev))
             max_lev_dict[orcidid] = lev_all

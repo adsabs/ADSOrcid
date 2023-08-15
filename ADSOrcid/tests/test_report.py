@@ -36,26 +36,26 @@ class TestReport(unittest.TestCase):
         if os.path.exists(claimed_log):
             os.remove(claimed_log)
 
-        json_1 = {u'response': {u'docs': [{u'bibcode': u'2018Test..001..123A'},
-                                          {u'bibcode': u'2018Test..001..123B'}],
-                                u'numFound': 2,
-                                u'start': 0}
+        json_1 = {'response': {'docs': [{'bibcode': '2018Test..001..123A'},
+                                          {'bibcode': '2018Test..001..123B'}],
+                                'numFound': 2,
+                                'start': 0}
                   }
 
-        json_2 = [{u'bibcode': u'2018Test..001..123A',
-                   u'orcid_pub': [u'0000-0001-0002-0003',
-                                  u'-']
+        json_2 = [{'bibcode': '2018Test..001..123A',
+                   'orcid_pub': ['0000-0001-0002-0003',
+                                  '-']
                   },
-                  {u'bibcode': u'2018Test..001..123B',
-                   u'orcid_user': [u'0000-0001-0002-0003',
-                                   u'0000-0001-0002-0004',
-                                   u'-']
+                  {'bibcode': '2018Test..001..123B',
+                   'orcid_user': ['0000-0001-0002-0003',
+                                   '0000-0001-0002-0004',
+                                   '-']
                    },
-                  {u'bibcode': u'2018Test..001..123C',
-                   u'orcid_other': [u'0000-0001-0002-0003',
-                                    u'0000-0001-0002-0004',
-                                    u'0000-0001-0002-0005',
-                                    u'-']
+                  {'bibcode': '2018Test..001..123C',
+                   'orcid_other': ['0000-0001-0002-0003',
+                                    '0000-0001-0002-0004',
+                                    '0000-0001-0002-0005',
+                                    '-']
                    }
                   ]
 
@@ -69,19 +69,19 @@ class TestReport(unittest.TestCase):
             for x in log.strip().split('\n'):
                 j = json.loads(x)
                 if line == 0:
-                    self.assertEqual(j['message'],u'Number of records with an orcid_pub: 2')
+                    self.assertEqual(j['message'],'Number of records with an orcid_pub: 2')
                 if line == 1:
-                    self.assertEqual(j['message'],u'Number of records with an orcid_user: 2')
+                    self.assertEqual(j['message'],'Number of records with an orcid_user: 2')
                 if line == 2:
-                    self.assertEqual(j['message'],u'Number of records with an orcid_other: 2')
+                    self.assertEqual(j['message'],'Number of records with an orcid_other: 2')
                 if line == 3:
-                    self.assertEqual(j['message'],u'Total number of orcid_pub claims: 1')
+                    self.assertEqual(j['message'],'Total number of orcid_pub claims: 1')
                 if line == 4:
-                    self.assertEqual(j['message'],u'Total number of orcid_user claims: 2')
+                    self.assertEqual(j['message'],'Total number of orcid_user claims: 2')
                 if line == 5:
-                    self.assertEqual(j['message'],u'Total number of orcid_other claims: 3')
+                    self.assertEqual(j['message'],'Total number of orcid_other claims: 3')
                 if line == 6:
-                    self.assertEqual(j['message'],u'Total number of records with any ORCID claims: 3')
+                    self.assertEqual(j['message'],'Total number of records with any ORCID claims: 3')
                 line += 1
 
     def test_num_claims(self):
@@ -113,19 +113,19 @@ class TestReport(unittest.TestCase):
         for x in log.strip().split('\n'):
             j = json.loads(x)
             if line == 0:
-                self.assertEqual(j['message'], u'Number of unique ORCID IDs generating claims of type claimed in last 1 days: 1')
+                self.assertEqual(j['message'], 'Number of unique ORCID IDs generating claims of type claimed in last 1 days: 1')
             if line == 1:
-                self.assertEqual(j['message'], u'Number of unique ORCID IDs generating claims of type removed in last 1 days: 1')
+                self.assertEqual(j['message'], 'Number of unique ORCID IDs generating claims of type removed in last 1 days: 1')
             if line == 2:
-                self.assertEqual(j['message'], u'Number of unique ORCID IDs generating claims of type updated in last 1 days: 1')
+                self.assertEqual(j['message'], 'Number of unique ORCID IDs generating claims of type updated in last 1 days: 1')
             if line == 3:
-                self.assertEqual(j['message'], u'Number of unique claims by a unique bibcode+ORCID ID pair that have been claimed in the last 1 days: 1')
+                self.assertEqual(j['message'], 'Number of unique claims by a unique bibcode+ORCID ID pair that have been claimed in the last 1 days: 1')
             if line == 4:
-                self.assertEqual(j['message'], u'Number of unique claims by a unique bibcode+ORCID ID pair that have been removed in the last 1 days: 1')
+                self.assertEqual(j['message'], 'Number of unique claims by a unique bibcode+ORCID ID pair that have been removed in the last 1 days: 1')
             if line == 5:
-                self.assertEqual(j['message'], u'Number of unique claims by a unique bibcode+ORCID ID pair that have been updated in the last 1 days: 1')
+                self.assertEqual(j['message'], 'Number of unique claims by a unique bibcode+ORCID ID pair that have been updated in the last 1 days: 1')
             if line == 6:
-                self.assertEqual(j['message'], u"Total number of non-unique claims with status ['claimed', 'removed', 'updated'] in the last 1 days, to compare with logging on rejected claims: 3")
+                self.assertEqual(j['message'], "Total number of non-unique claims with status ['claimed', 'removed', 'updated'] in the last 1 days, to compare with logging on rejected claims: 3")
             line += 1
 
     def test_Kibana(self):
@@ -134,8 +134,8 @@ class TestReport(unittest.TestCase):
             os.remove(kibana_log)
 
         with patch.object(report.app.client, 'post') as post:
-            data = {u'responses': [{u'hits': {u'total': 5},
-                                    u'status': 200}]}
+            data = {'responses': [{'hits': {'total': 5},
+                                    'status': 200}]}
             resp = PropertyMock()
             resp.text = str(data)
             resp.json = lambda: data
@@ -150,7 +150,7 @@ class TestReport(unittest.TestCase):
             for x in log.strip().split('\n'):
                 j = json.loads(x)
                 if line == 0:
-                    self.assertEqual(j['message'], u'Number of claims rejected in the last 1 days: 5')
+                    self.assertEqual(j['message'], 'Number of claims rejected in the last 1 days: 5')
                 if line == 1:
-                    self.assertEqual(j['message'], u'Number of missing profile errors in the last 1 days: 5')
+                    self.assertEqual(j['message'], 'Number of missing profile errors in the last 1 days: 5')
                 line += 1

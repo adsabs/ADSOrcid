@@ -32,10 +32,10 @@ def build_short_forms(orig_name):
         x = w_parts[i]
         if len(x) > 1:
             w_parts[i] = x[0]
-            ret.add(u'{0}, {1}'.format(surname, ' '.join(w_parts)))
+            ret.add('{0}, {1}'.format(surname, ' '.join(w_parts)))
     w_parts = [x[0] for x in parts]
     while len(w_parts) > 0:
-        ret.add(u'{0}, {1}'.format(surname, ' '.join(w_parts)))
+        ret.add('{0}, {1}'.format(surname, ' '.join(w_parts)))
         w_parts.pop()
 
     return list(ret)
@@ -76,14 +76,8 @@ def cleanup_name(name):
     """
     if not name:
         raise RuntimeError('Name cannot be blank')
-    if sys.version_info > (3,):
-        test_type = str
-    else:
-        test_type = unicode
-    if not isinstance(name, test_type):
-        name = name.decode('utf8') # assumption, but ok...
-    name = name.replace(u'.', u'')
-    name = u' '.join(name.split())
+    name = name.replace('.', '')
+    name = ' '.join(name.split())
     return name 
         
     

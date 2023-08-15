@@ -1,7 +1,6 @@
 
 
 from builtins import str
-from past.builtins import basestring
 from .models import ClaimsLog, Records, AuthorInfo, ChangeLog
 from adsputils import get_date, ADSCelery, u2asc
 from ADSOrcid import names
@@ -81,7 +80,7 @@ class ADSOrcidCelery(ADSCelery):
             not try to do anything with it; the session will have been closed already)
         """
         assert(orcidid)
-        if isinstance(date, basestring):
+        if isinstance(date, str):
             date = get_date(date)
         if status and status.lower() not in ALLOWED_STATUS:
             raise Exception('Unknown status %s' % status)
@@ -454,7 +453,7 @@ class ADSOrcidCelery(ADSCelery):
 
             for attname in attrs:
                 if old_facts.get(attname, None) != new_facts.get(attname, None):
-                    session.add(ChangeLog(key=u'{0}:update:{1}'.format(author.orcidid, attname),
+                    session.add(ChangeLog(key='{0}:update:{1}'.format(author.orcidid, attname),
                                oldvalue=json.dumps(old_facts.get(attname, None)),
                                newvalue=json.dumps(new_facts.get(attname, None))))
                     is_dirty = True
@@ -651,18 +650,18 @@ class ADSOrcidCelery(ADSCelery):
             elif data.get('numFound') == 0:
                 if search_identifiers:
                     bibcode_cache.setdefault(bibcode, {}) # insert to prevent failed retrievals
-                    raise IgnorableException(u'No metadata found for identifier:{0}'.format(bibcode))
+                    raise IgnorableException('No metadata found for identifier:{0}'.format(bibcode))
                 else:
                     return self.retrieve_metadata(bibcode, search_identifiers=True)
             else:
                 if data.get('numFound') > 10:
-                    raise IgnorableException(u'Insane num of results for {0} ({1})'.format(bibcode, data.get('numFound')))
+                    raise IgnorableException('Insane num of results for {0} ({1})'.format(bibcode, data.get('numFound')))
                 docs = data.get('docs', [])
                 for d in docs:
                     for ir in d.get('identifier', []):
                         if ir.lower().strip() == bibcode.lower().strip():
                             return d
-                raise IgnorableException(u'More than one document found for {0}'.format(bibcode))
+                raise IgnorableException('More than one document found for {0}'.format(bibcode))
 
 
 
@@ -694,15 +693,12 @@ class ADSOrcidCelery(ADSCelery):
         :param: claims
         :type: dict
         """
-
-        if not isinstance(claims, basestring):
-            claims = json.dumps(claims)
-        if authors and not isinstance(authors, basestring):
+        
+        claims = json.dumps(claims)
+        if authors:
             authors = json.dumps(authors)
 
         with self.session_scope() as session:
-            if not isinstance(claims, basestring):
-                claims = json.dumps(claims)
             r = session.query(Records).filter_by(bibcode=bibcode).first()
             if r is None:
                 t = get_date()

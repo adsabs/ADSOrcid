@@ -60,10 +60,10 @@ class Test(unittest.TestCase):
            'bibcode': '2015ApJ...799..123B', 
            'orcidid': '0000-0003-2686-9241',
            'account_id': '1',
-           'orcid_name': [u'Stern, Daniel'],
-           'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],
-           'author_norm': [u'Stern, D'],
-           'name': u'Stern, D K' 
+           'orcid_name': ['Stern, Daniel'],
+           'author': ['Stern, D', 'Stern, D K', 'Stern, Daniel'],
+           'author_norm': ['Stern, D'],
+           'name': 'Stern, D K'
           },
           0.9                     
         )
@@ -77,10 +77,10 @@ class Test(unittest.TestCase):
            'bibcode': '2015ApJ...799..123B', 
            'orcidid': '0000-0003-2686-9241',
            'account_id': '1',
-           'orcid_name': [u'Stern, Daniel'],
-           'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],
-           'author_norm': [u'Stern, D'],
-           'name': u'Stern, D K',
+           'orcid_name': ['Stern, Daniel'],
+           'author': ['Stern, D', 'Stern, D K', 'Stern, Daniel'],
+           'author_norm': ['Stern, D'],
+           'name': 'Stern, D K',
            'status': 'removed'
           },
           0.9                        
@@ -96,10 +96,10 @@ class Test(unittest.TestCase):
            'bibcode': '2015ApJ...799..123B', 
            'orcidid': '0000-0003-2686-9241',
            'account_id': '1',
-           'orcid_name': [u'Stern, Daniel'],
-           'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],
-           'author_norm': [u'Stern, D'],
-           'name': u'Stern, D K' 
+           'orcid_name': ['Stern, Daniel'],
+           'author': ['Stern, D', 'Stern, D K', 'Stern, Daniel'],
+           'author_norm': ['Stern, D'],
+           'name': 'Stern, D K'
           },
           0.9                       
         )
@@ -116,10 +116,10 @@ class Test(unittest.TestCase):
                 'bibcode': '2015ApJ...799..123B',
                 'orcidid': '0000-0001-2345-6789',
                 'account_id': '2',
-                'orcid_name': [u'Yildiz, Umut'],
-                'author': [u'Yildiz, U', u'Yildiz, Umut'],
-                'author_norm': [u'Yildiz, U'],
-                'name': u'Yildiz, Umut'
+                'orcid_name': ['Yildiz, Umut'],
+                'author': ['Yildiz, U', 'Yildiz, Umut'],
+                'author_norm': ['Yildiz, U'],
+                'name': 'Yildiz, Umut'
             },
             0.9
         )
@@ -153,10 +153,10 @@ class Test(unittest.TestCase):
                 'bibcode': '2015ApJ...799..123B',
                 'orcidid': '0000-0001-2345-6789',
                 'account_id': '1',
-                'orcid_name': [u'Zhang, Will'],
-                'author': [u'Zhang, Will'],
-                'author_norm': [u'Zhang, Will'],
-                'name': u'Zhang, Will'
+                'orcid_name': ['Zhang, Will'],
+                'author': ['Zhang, Will'],
+                'author_norm': ['Zhang, Will'],
+                'name': 'Zhang, Will'
             },
             0.75
         )
@@ -182,7 +182,7 @@ class Test(unittest.TestCase):
                 'bibcode': '2018Test.........1A',
                 'orcidid': '0000-0009-8765-4321',
                 'account_id': '2',
-                'orcid_name': [u'Tronsgaard, Rene'],
+                'orcid_name': ['Tronsgaard, Rene'],
                 'author': [''],
                 'name': ''
             },
@@ -244,7 +244,7 @@ class Test(unittest.TestCase):
                 ],
                 'claims': {}
             }
-            orcid_name = u'Wong, Jeffrey Yang'
+            orcid_name = 'Wong, Jeffrey Yang'
             r = updater.update_record(
                 doc1,
                 {
@@ -252,9 +252,9 @@ class Test(unittest.TestCase):
                     'orcidid': '0000-0003-2686-9241',
                     'account_id': '1',
                     'orcid_name': [orcid_name],
-                    'author': [u'Wong, J Y'],
-                    'author_norm': [u'Wong, J'],
-                    'name': u'Wong, J Y',
+                    'author': ['Wong, J Y'],
+                    'author_norm': ['Wong, J'],
+                    'name': 'Wong, J Y',
                     'short_name': names.build_short_forms(orcid_name)
                 },
                 0.8
@@ -319,10 +319,10 @@ class Test(unittest.TestCase):
         self.assertEqual(res, 2)
                 
         res = updater.find_orcid_position([
-            u"Goldsmith, P. F.",
-            u"Yıldız, U. A.",
-            u"Langer, W. D.",
-            u"Pineda, J. L."
+            "Goldsmith, P. F.",
+            "Yıldız, U. A.",
+            "Langer, W. D.",
+            "Pineda, J. L."
         ],
             ["Yildiz, U. A."]
         )
@@ -337,11 +337,11 @@ class Test(unittest.TestCase):
         with patch.object(self.app, 'retrieve_orcid') as retrieve_orcid:
 
             retrieve_orcid.return_value = {'status': None,
-                                           'name': u'Payne, Cecilia',
-                                           'facts': {u'author': [u'Payne, Cecilia'],
-                                                     u'orcid_name': [u'Payne, Cecilia'],
-                                                     u'name': u'Payne, Cecilia'},
-                                           'orcidid': u'0000-0001-0002-0003',
+                                           'name': 'Payne, Cecilia',
+                                           'facts': {'author': ['Payne, Cecilia'],
+                                                     'orcid_name': ['Payne, Cecilia'],
+                                                     'name': 'Payne, Cecilia'},
+                                           'orcidid': '0000-0001-0002-0003',
                                            'id': 1,
                                            'account_id': None,
                                            'updated': '2017-01-01T12:00:00.000000Z'
@@ -366,7 +366,7 @@ class Test(unittest.TestCase):
             self.app.record_claims('2018Test....123...A',
                                    {'verified': ['0000-0001-0002-0003', '-', '-'],
                                     'unverified': ['-', '-', '-']},
-                                    authors = [u'Payne, Cecilia', u'Doe, Jane', u'Doe, John'])
+                                    authors = ['Payne, Cecilia', 'Doe, Jane', 'Doe, John'])
 
             self.app.record_claims('2018Test....123...B',
                                    {'verified': ['0000-0001-0002-0003', '-', '-'],

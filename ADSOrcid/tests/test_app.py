@@ -100,40 +100,25 @@ class TestAdsOrcidCelery(unittest.TestCase):
         """It should know how to import bibcode:orcidid pairs
         :return None
         """
-        if sys.version_info > (3,):
-            fake_file = StringIO("\n".join([
-                                     "b123456789123456789\t0000-0000-0000-0001",
-                                     "b123456789123456789\t0000-0000-0000-0002\tarxiv",
-                                     "b123456789123456789\t0000-0000-0000-0003\tarxiv\tclaimed",
-                                     "b123456789123456789\t0000-0000-0000-0004\tfoo        \tclaimed\t2008-09-03T20:56:35.450686Z",
-                                     "b123456789123456789\t0000-0000-0000-0005",
-                                     "b123456789123456789\t0000-0000-0000-0006",
-                                     "b123456789123456789\t0000-0000-0000-0004\tfoo        \tupdated\t2009-09-03T20:56:35.450686Z",
-                                    ]))
-        else:
-            fake_file = BytesIO("\n".join([
-                "b123456789123456789\t0000-0000-0000-0001",
-                "b123456789123456789\t0000-0000-0000-0002\tarxiv",
-                "b123456789123456789\t0000-0000-0000-0003\tarxiv\tclaimed",
-                "b123456789123456789\t0000-0000-0000-0004\tfoo        \tclaimed\t2008-09-03T20:56:35.450686Z",
-                "b123456789123456789\t0000-0000-0000-0005",
-                "b123456789123456789\t0000-0000-0000-0006",
-                "b123456789123456789\t0000-0000-0000-0004\tfoo        \tupdated\t2009-09-03T20:56:35.450686Z",
-            ]))
+        
+        fake_file = StringIO("\n".join([
+                                    "b123456789123456789\t0000-0000-0000-0001",
+                                    "b123456789123456789\t0000-0000-0000-0002\tarxiv",
+                                    "b123456789123456789\t0000-0000-0000-0003\tarxiv\tclaimed",
+                                    "b123456789123456789\t0000-0000-0000-0004\tfoo        \tclaimed\t2008-09-03T20:56:35.450686Z",
+                                    "b123456789123456789\t0000-0000-0000-0005",
+                                    "b123456789123456789\t0000-0000-0000-0006",
+                                    "b123456789123456789\t0000-0000-0000-0004\tfoo        \tupdated\t2009-09-03T20:56:35.450686Z",
+                                ]))
         with mock.patch('ADSOrcid.app.open', return_value=fake_file, create=True
                 ) as context:
             self.app.import_recs(__file__)
             self.assertTrue(len(self.app._session.query(ClaimsLog).all()) == 7)
 
-        if sys.version_info > (3,):
-            fake_file = StringIO('\n'.join([
-                                    "b123456789123456789\t0000-0000-0000-0001",
-                                    "b123456789123456789\t0000-0000-0000-0002\tarxiv"]))
-        else:
-            fake_file = BytesIO('\n'.join([
-                "b123456789123456789\t0000-0000-0000-0001",
-                "b123456789123456789\t0000-0000-0000-0002\tarxiv"]))
-
+        fake_file = StringIO('\n'.join([
+                                "b123456789123456789\t0000-0000-0000-0001",
+                                "b123456789123456789\t0000-0000-0000-0002\tarxiv"]))
+        
         with mock.patch('ADSOrcid.app.open', return_value=fake_file, create=True
                 ) as context:
             c = []
@@ -170,17 +155,17 @@ class TestAdsOrcidCelery(unittest.TestCase):
             body=open(os.path.join(self.app.conf['TEST_DIR'], 'stub_data', orcidid + '.solr.json')).read())
         
         data = app.harvest_author_info(orcidid)
-        self.assertDictEqual(data, {'orcid_name': [u'Stern, Daniel'],
-                                    'author': [u'Stern, A D',
-                                               u'Stern, Andrew D',
-                                               u'Stern, D', 
-                                               u'Stern, D K', 
-                                               u'Stern, Daniel'
+        self.assertDictEqual(data, {'orcid_name': ['Stern, Daniel'],
+                                    'author': ['Stern, A D',
+                                               'Stern, Andrew D',
+                                               'Stern, D', 
+                                               'Stern, D K', 
+                                               'Stern, Daniel'
                                                ],
                                     'authorized': True,
-                                    'author_norm': [u'Stern, D'],
-                                    'current_affiliation': u'ADS',
-                                    'name': u'Stern, D',
+                                    'author_norm': ['Stern, D'],
+                                    'current_affiliation': 'ADS',
+                                    'name': 'Stern, D',
                                     'short_name': ['Stern, A', 'Stern, A D', 'Stern, D', 'Stern, D K'],
                                     'ascii_name': ['Stern, A',
                                             'Stern, A D',
@@ -197,10 +182,10 @@ class TestAdsOrcidCelery(unittest.TestCase):
         # bootstrap the db with already existing author info
         with self.app.session_scope() as session:
             ainfo = AuthorInfo(orcidid='0000-0003-2686-9241',
-                               facts=json.dumps({'orcid_name': [u'Stern, Daniel'],
-                                    'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],
-                                    'author_norm': [u'Stern, D'],
-                                    'name': u'Stern, D K'
+                               facts=json.dumps({'orcid_name': ['Stern, Daniel'],
+                                    'author': ['Stern, D', 'Stern, D K', 'Stern, Daniel'],
+                                    'author_norm': ['Stern, D'],
+                                    'name': 'Stern, D K'
                                     }),
                                )
             session.add(ainfo)
@@ -208,62 +193,62 @@ class TestAdsOrcidCelery(unittest.TestCase):
         
         with self.app.session_scope() as session:
             ainfo = session.query(AuthorInfo).filter_by(orcidid='0000-0003-2686-9241').first()
-            with patch.object(self.app, 'harvest_author_info', return_value= {'orcid_name': [u'Sternx, Daniel'],
-                                        'author': [u'Stern, D', u'Stern, D K', u'Sternx, Daniel'],
-                                        'author_norm': [u'Stern, D'],
-                                        'name': u'Sternx, D K'
+            with patch.object(self.app, 'harvest_author_info', return_value= {'orcid_name': ['Sternx, Daniel'],
+                                        'author': ['Stern, D', 'Stern, D K', 'Sternx, Daniel'],
+                                        'author_norm': ['Stern, D'],
+                                        'name': 'Sternx, D K'
                                         }
                     ) as _:
                 app.clear_caches()
                 author = self.app.retrieve_orcid('0000-0003-2686-9241')
                 self.assertTrue(set({'status': None,
-                                     'name': u'Sternx, D K',
-                                     'facts': {u'author': [u'Stern, D', u'Stern, D K', u'Sternx, Daniel'], u'orcid_name': [u'Sternx, Daniel'], u'author_norm': [u'Stern, D'], u'name': u'Sternx, D K'},
-                                     'orcidid': u'0000-0003-2686-9241',
+                                     'name': 'Sternx, D K',
+                                     'facts': {'author': ['Stern, D', 'Stern, D K', 'Sternx, Daniel'], 'orcid_name': ['Sternx, Daniel'], 'author_norm': ['Stern, D'], 'name': 'Sternx, D K'},
+                                     'orcidid': '0000-0003-2686-9241',
                                      'id': 1,
                                      'account_id': None}).issubset(author))
-                self.assertTrue(set({'oldvalue': json.dumps([u'Stern, Daniel']),
-                                     'newvalue': json.dumps([u'Sternx, Daniel'])}) \
+                self.assertTrue(set({'oldvalue': json.dumps(['Stern, Daniel']),
+                                     'newvalue': json.dumps(['Sternx, Daniel'])}) \
                                 .issubset(set(session.query(ChangeLog).filter_by(key='0000-0003-2686-9241:update:orcid_name').first().toJSON())))
-                self.assertTrue(set({'oldvalue': json.dumps(u'Stern, D K'),
-                                     'newvalue': json.dumps(u'Sternx, D K')}) \
+                self.assertTrue(set({'oldvalue': json.dumps('Stern, D K'),
+                                     'newvalue': json.dumps('Sternx, D K')}) \
                                 .issubset(set(session.query(ChangeLog).filter_by(key='0000-0003-2686-9241:update:name').first().toJSON())))
-                self.assertTrue(set({'oldvalue': json.dumps([u'Stern, D', u'Stern, D K', u'Stern, Daniel']),
-                                     'newvalue': json.dumps([u'Stern, D', u'Stern, D K', u'Sternx, Daniel'])}) \
+                self.assertTrue(set({'oldvalue': json.dumps(['Stern, D', 'Stern, D K', 'Stern, Daniel']),
+                                     'newvalue': json.dumps(['Stern, D', 'Stern, D K', 'Sternx, Daniel'])}) \
                                 .issubset(set(session.query(ChangeLog).filter_by(key='0000-0003-2686-9241:update:author').first().toJSON())))
         
         with self.app.session_scope() as session:
             ainfo = session.query(AuthorInfo).filter_by(orcidid='0000-0003-2686-9241').first()
             with mock.patch.object(self.app, 'harvest_author_info', return_value= {
-                                        'name': u'Sternx, D K',
+                                        'name': 'Sternx, D K',
                                         'authorized': True
                                         }
                     ) as _:
                 app.clear_caches()
                 author = self.app.retrieve_orcid('0000-0003-2686-9241')
                 self.assertTrue(set({'status': None,
-                                     'name': u'Sternx, D K',
-                                     'facts': {u'authorized': True, u'name': u'Sternx, D K'},
-                                     'orcidid': u'0000-0003-2686-9241',
+                                     'name': 'Sternx, D K',
+                                     'facts': {'authorized': True, 'name': 'Sternx, D K'},
+                                     'orcidid': '0000-0003-2686-9241',
                                      'id': 1,
                                      'account_id': 1}).issubset(author))
-                self.assertTrue(set({'oldvalue': json.dumps([u'Stern, Daniel']),
-                                     'newvalue': json.dumps([u'Sternx, Daniel'])}) \
+                self.assertTrue(set({'oldvalue': json.dumps(['Stern, Daniel']),
+                                     'newvalue': json.dumps(['Sternx, Daniel'])}) \
                                 .issubset(set(session.query(ChangeLog).filter_by(key='0000-0003-2686-9241:update:orcid_name').first().toJSON())))
-                self.assertTrue(set({'oldvalue': json.dumps(u'Stern, D K'),
-                                     'newvalue': json.dumps(u'Sternx, D K')}) \
+                self.assertTrue(set({'oldvalue': json.dumps('Stern, D K'),
+                                     'newvalue': json.dumps('Sternx, D K')}) \
                                 .issubset(set(session.query(ChangeLog).filter_by(key='0000-0003-2686-9241:update:name').first().toJSON())))
-                self.assertTrue(set({'oldvalue': json.dumps([u'Stern, D', u'Stern, D K', u'Stern, Daniel']),
-                                     'newvalue': json.dumps([u'Stern, D', u'Stern, D K', u'Sternx, Daniel'])}) \
+                self.assertTrue(set({'oldvalue': json.dumps(['Stern, D', 'Stern, D K', 'Stern, Daniel']),
+                                     'newvalue': json.dumps(['Stern, D', 'Stern, D K', 'Sternx, Daniel'])}) \
                                 .issubset(set(session.query(ChangeLog).filter_by(key='0000-0003-2686-9241:update:author').first().toJSON())))
  
 
     def test_create_orcid(self):
         """Has to create AuthorInfo and populate it, but not add to database"""
-        with mock.patch.object(self.app, 'harvest_author_info', return_value= {'orcid_name': [u'Stern, Daniel'],
-                                    'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],
-                                    'author_norm': [u'Stern, D'],
-                                    'name': u'Stern, D K'
+        with mock.patch.object(self.app, 'harvest_author_info', return_value= {'orcid_name': ['Stern, Daniel'],
+                                    'author': ['Stern, D', 'Stern, D K', 'Stern, Daniel'],
+                                    'author_norm': ['Stern, D'],
+                                    'name': 'Stern, D K'
                                     }
                 ) as _:
             res = self.app.create_orcid('0000-0003-2686-9241')
@@ -277,17 +262,17 @@ class TestAdsOrcidCelery(unittest.TestCase):
 
     def test_retrive_orcid(self):
         """Has to find and load/or create ORCID data"""
-        with mock.patch.object(self.app, 'harvest_author_info', return_value= {'orcid_name': [u'Stern, Daniel'],
-                                    'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'],
-                                    'author_norm': [u'Stern, D'],
-                                    'name': u'Stern, D K'
+        with mock.patch.object(self.app, 'harvest_author_info', return_value= {'orcid_name': ['Stern, Daniel'],
+                                    'author': ['Stern, D', 'Stern, D K', 'Stern, Daniel'],
+                                    'author_norm': ['Stern, D'],
+                                    'name': 'Stern, D K'
                                     }
                 ) as _:
             author = self.app.retrieve_orcid('0000-0003-2686-9241')
             self.assertTrue(set({'status': None,
-                                 'name': u'Stern, D K',
-                                 'facts': {u'author': [u'Stern, D', u'Stern, D K', u'Stern, Daniel'], u'orcid_name': [u'Stern, Daniel'], u'author_norm': [u'Stern, D'], u'name': u'Stern, D K'},
-                                 'orcidid': u'0000-0003-2686-9241',
+                                 'name': 'Stern, D K',
+                                 'facts': {'author': ['Stern, D', 'Stern, D K', 'Stern, Daniel'], 'orcid_name': ['Stern, Daniel'], 'author_norm': ['Stern, D'], 'name': 'Stern, D K'},
+                                 'orcidid': '0000-0003-2686-9241',
                                  'id': 1,
                                  'account_id': None}).issubset(author))
         
@@ -373,7 +358,6 @@ class TestAdsOrcidCelery(unittest.TestCase):
                          force=True,
                          orcid_identifiers_order=self.app.conf.get('ORCID_IDENTIFIERS_ORDER', {'bibcode': 9, '*': -1})
                          )
-            #print len(orcid_present), len(updated), len(removed)
             assert len(orcid_present) == 9 and len(updated) == 0 and len(removed) == 0
 
         # test backwards compatibility in get_claims with old ORCID API
