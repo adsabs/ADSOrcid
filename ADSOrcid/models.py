@@ -45,13 +45,9 @@ class ClaimsLog(Base):
     created = Column(UTCDateTime, default=get_date)
     
     def toJSON(self):
-        if sys.version_info > (3,):
-            out_prov = str(self.provenance)
-        else:
-            out_prov = unicode(self.provenance)
         return {'id': self.id, 'orcidid': self.orcidid,
                 'bibcode': self.bibcode, 'status': self.status,
-                'provenance': out_prov, 'created': self.created and get_date(self.created).isoformat() or None
+                'provenance': str(self.provenance), 'created': self.created and get_date(self.created).isoformat() or None
                 }
     
     

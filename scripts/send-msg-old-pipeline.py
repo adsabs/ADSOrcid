@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from past.builtins import basestring
 import pika
 import json
 import sys
@@ -16,7 +15,7 @@ import os
 
 
 def publish(channel, msg):
-    if not isinstance(msg, basestring):
+    if not isinstance(msg, str):
         msg = json.dumps(msg)
         
     x = channel.basic_publish(exchange='ads-orcid',

@@ -60,9 +60,9 @@ def update_record(rec, claim, min_levenshtein):
     authors = rec.get('authors', [])
 
     # make sure the claims have the necessary structure
-    fld_name = u'unverified'
+    fld_name = 'unverified'
     if 'account_id' in claim and claim['account_id']: # the claim was made by ADS verified user
-        fld_name = u'verified'
+        fld_name = 'verified'
 
     num_authors = len(authors)
 
@@ -127,8 +127,8 @@ def update_record(rec, claim, min_levenshtein):
             idx = find_orcid_position(rec['authors'], claim[fx], min_levenshtein=min_levenshtein)
             if idx > -1:
                 if idx >= num_authors:
-                    logger.error(u'Index is beyond list boundary: \n' +
-                                     u'Field {fx}, author {author}, len(authors)={la}, len({fx})=lfx'
+                    logger.error('Index is beyond list boundary: \n' +
+                                     'Field {fx}, author {author}, len(authors)={la}, len({fx})=lfx'
                                      .format(
                                        fx=fx, author=claim[fx], la=num_authors, lfx=len(claim[fx])
                                        )
@@ -176,10 +176,7 @@ def find_orcid_position(authors_list, name_variants,
                 res.append((Levenshtein.ratio(author, variant), aidx, vidx))
                 # check transliterated/ascii form of names in author list if name is different from ascii version
                 if u2asc(author) != author:
-                    if sys.version_info > (3,):
-                        res_asc.append((Levenshtein.ratio(u2asc(author).encode(), variant), aidx, vidx))
-                    else:
-                        res_asc.append((Levenshtein.ratio(u2asc(author), variant), aidx, vidx))
+                    res_asc.append((Levenshtein.ratio(u2asc(author).encode(), variant), aidx, vidx))
                 else:
                     res_asc.append(res[-1])
                 aidx += 1
@@ -201,28 +198,17 @@ def find_orcid_position(authors_list, name_variants,
         author_name = al[res[0][1]]
         variant_name = nv[res[0][2]]
         if author_name in variant_name or variant_name in author_name:
-            if sys.version_info < (3,):
-                logger.debug(u'Using submatch for: %s (required:%s) closest: %s, variant: %s' \
-                             % (res[0], min_levenshtein,
-                                unicode(author_name, 'utf-8'),
-                                unicode(variant_name, 'utf-8')))
-            else:
-                logger.debug('Using submatch for: %s (required:%s) closest: %s, variant: %s' \
-                             % (res[0], min_levenshtein,
-                                author_name,
-                                variant_name))
-            return res[0][1]
-
-        if sys.version_info < (3,):
-            logger.debug(u'No match found: the closest is: %s (required:%s) closest: %s, variant: %s' \
+            logger.debug('Using submatch for: %s (required:%s) closest: %s, variant: %s' \
                             % (res[0], min_levenshtein,
-                               unicode(author_name, 'utf-8'),
-                               unicode(variant_name, 'utf-8')))
-        else:
-            logger.debug('No match found: the closest is: %s (required:%s) closest: %s, variant: %s' \
-                         % (res[0], min_levenshtein,
                             author_name,
                             variant_name))
+            return res[0][1]
+
+   
+        logger.debug('No match found: the closest is: %s (required:%s) closest: %s, variant: %s' \
+                        % (res[0], min_levenshtein,
+                        author_name,
+                        variant_name))
         return -1
 
     logger.debug('Found match: %s (min_levenstein=%s), authors=%s', authors_list[res[0][1]], min_levenshtein, authors_list)
@@ -290,7 +276,7 @@ def reindex_all_claims(app, orcidid, since=None, ignore_errors=False):
                         recs_modified.add(bibcode)
                 except Exception as e:
                     if ignore_errors:
-                        app.logger.error(u'Error processing {0} {1}'.format(bibcode, orcidid))
+                        app.logger.error('Error processing {0} {1}'.format(bibcode, orcidid))
                     else:
                         raise e
 

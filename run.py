@@ -19,7 +19,7 @@ import argparse
 import logging
 import traceback
 import warnings
-from requests.packages.urllib3 import exceptions
+from urllib3 import exceptions
 warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)
 
 from adsputils import get_date
@@ -55,11 +55,11 @@ def reindex_claims(since=None, orcid_ids=None, **kwargs):
         for oid in orcid_ids:
             tasks.task_index_orcid_profile.delay({'orcidid': oid, 'force': True})
         if not since:
-            print 'Done (just the supplied orcidids)'
+            print('Done (just the supplied orcidids)')
             return
 
     logging.captureWarnings(True)
-    if not since or isinstance(since, basestring) and since.strip() == "":
+    if not since or isinstance(since, str) and since.strip() == "":
         with app.session_scope() as session:
             kv = session.query(KeyValue).filter_by(key='last.reindex').first()
             if kv is not None:
@@ -83,14 +83,14 @@ def reindex_claims(since=None, orcid_ids=None, **kwargs):
                     if len(changed):
                         orcidids.add(orcidid)
                     tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': True})
-                except:
-                    print 'Error processing: {0}'.format(orcidid)
+                except Exception as e:
+                    print('Error processing: {0}'.format(orcidid))
                     traceback.print_exc()
                     continue
                 if len(orcidids) % 100 == 0:
-                    print 'Done replaying {0} profiles'.format(len(orcidids))
+                    print('Done replaying {0} profiles'.format(len(orcidids)))
 
-    print 'Now harvesting orcid profiles...'
+    print('Now harvesting orcid profiles...')
 
     # then get all new/old orcidids from orcid-service
     all_orcids = set(updater.get_all_touched_profiles(app, from_date.isoformat()))
@@ -103,7 +103,7 @@ def reindex_claims(since=None, orcid_ids=None, **kwargs):
             tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': True})
         except: # potential backpressure (we are too fast)
             time.sleep(2)
-            print 'Conn problem, retrying...', orcidid
+            print('Conn problem, retrying...', orcidid)
             tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': True})
 
     with app.session_scope() as session:
@@ -115,7 +115,7 @@ def reindex_claims(since=None, orcid_ids=None, **kwargs):
             kv.value = from_date.isoformat()
         session.commit()
 
-    print 'Done'
+    print('Done')
     logger.info('Done submitting {0} orcid ids.'.format(len(orcidids)))
 
 
@@ -133,11 +133,11 @@ def repush_claims(since=None, orcid_ids=None, **kwargs):
         for oid in orcid_ids:
             tasks.task_index_orcid_profile.delay({'orcidid': oid, 'force': False})
         if not since:
-            print 'Done (just the supplied orcidids)'
+            print('Done (just the supplied orcidids)')
             return
 
     logging.captureWarnings(True)
-    if not since or isinstance(since, basestring) and since.strip() == "":
+    if not since or isinstance(since, str) and since.strip() == "":
         with app.session_scope() as session:
             kv = session.query(KeyValue).filter_by(key='last.repush').first()
             if kv is not None:
@@ -146,7 +146,6 @@ def repush_claims(since=None, orcid_ids=None, **kwargs):
                 since = '1974-11-09T22:56:52.518001Z'
 
     from_date = get_date(since)
-    orcidids = set()
 
     logger.info('Re-pushing records since: {0}'.format(from_date.isoformat()))
 
@@ -161,9 +160,9 @@ def repush_claims(since=None, orcid_ids=None, **kwargs):
             data = rec.toJSON()
             try:
                 tasks.task_output_results.delay({'bibcode': data['bibcode'], 'authors': data['authors'], 'claims': data['claims']})
-            except: # potential backpressure (we are too fast)
+            except Exception as e: # potential backpressure (we are too fast)
                 time.sleep(2)
-                print 'Conn problem, retrying ', data['bibcode']
+                print('Conn problem, retrying ', data['bibcode'])
                 tasks.task_output_results.delay({'bibcode': data['bibcode'], 'authors': data['authors'], 'claims': data['claims']})
             num_bibcodes += 1
 
@@ -193,12 +192,12 @@ def refetch_orcidids(since=None, orcid_ids=None, **kwargs):
         for oid in orcid_ids:
             tasks.task_index_orcid_profile({'orcidid': oid, 'force': False})
         if not since:
-            print 'Done (just the supplied orcidids)'
+            print('Done (just the supplied orcidids)')
             return
 
 
     logging.captureWarnings(True)
-    if not since or isinstance(since, basestring) and since.strip() == "":
+    if not since or isinstance(since, str) and since.strip() == "":
         with app.session_scope() as session:
             kv = session.query(KeyValue).filter_by(key='last.refetch').first()
             if kv is not None:
@@ -218,9 +217,9 @@ def refetch_orcidids(since=None, orcid_ids=None, **kwargs):
     for orcidid in orcidids:
         try:
             tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': False})
-        except: # potential backpressure (we are too fast)
+        except Exception as e: # potential backpressure (we are too fast)
             time.sleep(2)
-            print 'Conn problem, retrying...', orcidid
+            print('Conn problem, retrying...', orcidid)
             tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': False})
 
     with app.session_scope() as session:
@@ -232,7 +231,7 @@ def refetch_orcidids(since=None, orcid_ids=None, **kwargs):
             kv.value = from_date.isoformat()
         session.commit()
 
-    print 'Done'
+    print('Done')
     logger.info('Done submitting {0} orcid ids.'.format(len(orcidids)))
 
 
@@ -303,7 +302,7 @@ def reprocess_bibcodes(bibcodes, force=False):
     for orcidid in orcids_to_process:
         try:
             tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': True})
-        except: # potential backpressure (we are too fast)
+        except Exception as e: # potential backpressure (we are too fast)
             time.sleep(2)
             logger.info('Connection problem when trying to process {}, retrying...'.format(orcidid))
             tasks.task_index_orcid_profile.delay({'orcidid': orcidid, 'force': True})
@@ -313,61 +312,61 @@ def reprocess_bibcodes(bibcodes, force=False):
 
 def print_kvs():
     """Prints the values stored in the KeyValue table."""
-    print 'Key, Value from the storage:'
-    print '-' * 80
+    print('Key, Value from the storage:')
+    print('-' * 80)
     with app.session_scope() as session:
         for kv in session.query(KeyValue).order_by('key').all():
-            print kv.key, kv.value
+            print(kv.key, kv.value)
 
 def show_api_diagnostics(orcid_ids=None, bibcodes=None, ):
     """
     Prints various responses that we receive from our API.
     """
 
-    print 'API_ENDPOINT', app.conf.get('API_ENDPOINT', None)
-    print 'API_SOLR_QUERY_ENDPOINT', app.conf.get('API_SOLR_QUERY_ENDPOINT', None)
-    print 'API_ORCID_EXPORT_PROFILE', app.conf.get('API_ORCID_EXPORT_PROFILE', None)
-    print 'API_ORCID_UPDATES_ENDPOINT', app.conf.get('API_ORCID_UPDATES_ENDPOINT', None)
+    print('API_ENDPOINT', app.conf.get('API_ENDPOINT', None))
+    print('API_SOLR_QUERY_ENDPOINT', app.conf.get('API_SOLR_QUERY_ENDPOINT', None))
+    print('API_ORCID_EXPORT_PROFILE', app.conf.get('API_ORCID_EXPORT_PROFILE', None))
+    print('API_ORCID_UPDATES_ENDPOINT', app.conf.get('API_ORCID_UPDATES_ENDPOINT', None))
 
 
     if orcid_ids:
         for o in orcid_ids:
-            print o
-            print 'DB Model', app.retrieve_orcid(o)
-            print '=' * 80 + '\n'
-            print 'Author info', app.harvest_author_info(o)
-            print '=' * 80 + '\n'
-            print 'Public orcid profile', app.get_public_orcid_profile(o)
-            print '=' * 80 + '\n'
-            print 'ADS Orcid Profile', app.get_ads_orcid_profile(o)
-            print '=' * 80 + '\n'
-            print 'Harvested Author Info', app.retrieve_orcid(o)
-            print '=' * 80 + '\n'
+            print(o)
+            print('DB Model', app.retrieve_orcid(o))
+            print('=' * 80 + '\n')
+            print('Author info', app.harvest_author_info(o))
+            print('=' * 80 + '\n')
+            print('Public orcid profile', app.get_public_orcid_profile(o))
+            print('=' * 80 + '\n')
+            print('ADS Orcid Profile', app.get_ads_orcid_profile(o))
+            print('=' * 80 + '\n')
+            print('Harvested Author Info', app.retrieve_orcid(o))
+            print('=' * 80 + '\n')
             orcid_present, updated, removed = app.get_claims(o,
                          app.conf.get('API_TOKEN'),
                          app.conf.get('API_ORCID_EXPORT_PROFILE') % o,
                          orcid_identifiers_order=app.conf.get('ORCID_IDENTIFIERS_ORDER', {'bibcode': 9, '*': -1})
                          )
-            print 'All of orcid', len(orcid_present), orcid_present
-            print 'In need of update', len(updated), updated
-            print 'In need of removal', len(removed), removed
-            print '=' * 80 + '\n'
+            print('All of orcid', len(orcid_present), orcid_present)
+            print('In need of update', len(updated), updated)
+            print('In need of removal', len(removed), removed)
+            print('=' * 80 + '\n')
     else:
-        print 'If you want to see what I see for authors, give me some orcid ids'
+        print('If you want to see what I see for authors, give me some orcid ids')
 
     if bibcodes:
         for b in bibcodes:
-            print b, app.retrieve_metadata(b)
+            print(b, app.retrieve_metadata(b))
     else:
-        print 'If you want to see what I see give me some bibcodes'
+        print('If you want to see what I see give me some bibcodes')
 
 
     if orcid_ids:
-        print '=' * 80 + '\n'
-        print 'Now submitting ORCiD for processing'
+        print('=' * 80 + '\n')
+        print('Now submitting ORCiD for processing')
         for o in orcid_ids:
             m = {'orcidid': o}
-            print 'message=%s, taskid=%s' % (m, tasks.task_index_orcid_profile.delay(m))
+            print('message=%s, taskid=%s' % (m, tasks.task_index_orcid_profile.delay(m)))
 
 
 if __name__ == '__main__':
