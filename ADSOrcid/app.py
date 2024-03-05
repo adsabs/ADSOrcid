@@ -168,7 +168,7 @@ class ADSOrcidCelery(ADSCelery):
     def _get_ads_orcid_profile(self, orcidid, api_token, api_url):
         r = self.client.get(api_url,
                  params={'reload': True},
-                 headers={'Accept': 'application/json', 'Authorization': 'Bearer:%s' % api_token})
+                 headers={'Accept': 'application/json', 'Authorization': 'Bearer %s' % api_token})
         if r.status_code == 200:
             return r.json()
         else:
@@ -420,7 +420,7 @@ class ADSOrcidCelery(ADSCelery):
     @cachetools.cached(ads_cache)
     def get_ads_orcid_profile(self, orcidid):
         r = self.client.get(self._config.get('API_ORCID_EXPORT_PROFILE') % orcidid,
-                     headers={'Accept': 'application/json', 'Authorization': 'Bearer:%s' % self._config.get('API_TOKEN')})
+                     headers={'Accept': 'application/json', 'Authorization': 'Bearer %s' % self._config.get('API_TOKEN')})
         if r.status_code != 200:
             return None
         else:
@@ -640,7 +640,7 @@ class ADSOrcidCelery(ADSCelery):
                 }
         r = self.client.get(self._config.get('API_SOLR_QUERY_ENDPOINT'),
              params=params,
-             headers={'Accept': 'application/json', 'Authorization': 'Bearer:%s' % self._config.get('API_TOKEN')})
+             headers={'Accept': 'application/json', 'Authorization': 'Bearer %s' % self._config.get('API_TOKEN')})
         if r.status_code != 200:
             raise Exception('{}\n{}\n{}'.format(r.status_code, params, r.text))
         else:
