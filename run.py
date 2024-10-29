@@ -262,8 +262,6 @@ def reprocess_bibcodes(bibcodes, force=False):
         bibcodes = tmp_bibcodes
     else:
         raise TypeError('Bibcodes must be list, string, or filename starting with @')
-    import pdb
-    pdb.set_trace()
 
     for bibcode in bibcodes:
         logger.debug('Reprocessing bibcode {}'.format(bibcode))
