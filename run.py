@@ -250,7 +250,7 @@ def reprocess_bibcodes(bibcodes, force=False):
 
     if type(bibcodes) != list:
         if type(bibcodes) == str:
-            if '@' in bibcodes:
+            if bibcodes.startswith('@'):
                 tmp_bibcodes = []
                 with open(bibcodes.replace('@', '')) as fp:
                     for line in fp:
