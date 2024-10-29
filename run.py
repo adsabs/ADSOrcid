@@ -248,21 +248,20 @@ def reprocess_bibcodes(bibcodes, force=False):
     orcids_to_process = set()
     logging.captureWarnings(True)
 
-    if type(bibcodes) != list:
+    if (type(bibcodes) != list):
         if type(bibcodes) == str:
-            if bibcodes.startswith('@'):
-                tmp_bibcodes = []
-                with open(bibcodes.replace('@', '')) as fp:
-                    for line in fp:
-                        if line.startswith('#'):
-                            continue
-                        b = line.strip()
-                        tmp_bibcodes.append(b)
-                bibcodes = tmp_bibcodes
-            else:
-                bibcodes = [bibcodes]
-        else:
-            raise TypeError('Bibcodes must be list, string, or filename starting with @')
+            bibcodes = [bibcodes]
+    elif (len(bibcodes) == 1) and bibcodes[0].startswith('@'):
+        tmp_bibcodes = []
+        with open(bibcodes[0].replace('@', '')) as fp:
+            for line in fp:
+                if line.startswith('#'):
+                    continue
+                b = line.strip()
+                tmp_bibcodes.append(b)
+        bibcodes = tmp_bibcodes
+    else:
+        raise TypeError('Bibcodes must be list, string, or filename starting with @')
 
     for bibcode in bibcodes:
         logger.debug('Reprocessing bibcode {}'.format(bibcode))
