@@ -56,6 +56,7 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         name: coverage-adsorcid
+        path: .coverage
 
     - name: Coveralls
       run: coveralls
